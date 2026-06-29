@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -442,6 +443,117 @@ def risk_badge(label: str) -> None:
         st.warning(f"Decision gate: {label}")
     else:
         st.error(f"Decision gate: {label}")
+
+
+@st.cache_data(show_spinner=False)
+def platform_image_data_uri() -> str:
+    if not PLATFORM_IMAGE.exists():
+        return ""
+    encoded = base64.b64encode(PLATFORM_IMAGE.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
+def entered_from_query() -> bool:
+    value = st.query_params.get("enter", "")
+    if isinstance(value, list):
+        value = value[0] if value else ""
+    return str(value).lower() in {"1", "true", "yes", "app", "workbench"}
+
+
+def should_show_landing() -> bool:
+    if st.session_state.get("entered_app"):
+        return False
+    if entered_from_query():
+        st.session_state.entered_app = True
+        return False
+    return True
+
+
+def render_landing() -> None:
+    image_src = platform_image_data_uri()
+    image_markup = (
+        f'<img src="{image_src}" alt="ToxiGuard Platform CMC RA Evidence Workbench" />'
+        if image_src
+        else '<div class="tg-fallback-title">ToxiGuard-VCC</div>'
+    )
+    st.markdown(
+        f"""
+        <style>
+          [data-testid="stHeader"],
+          [data-testid="stToolbar"],
+          [data-testid="stDecoration"] {{
+            display: none;
+          }}
+          .block-container {{
+            max-width: 100%;
+            padding: 0 !important;
+          }}
+          .tg-landing {{
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            overflow: hidden;
+            background: #071b3d;
+          }}
+          .tg-landing-link {{
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: pointer;
+            text-decoration: none;
+          }}
+          .tg-landing img {{
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center center;
+            display: block;
+          }}
+          .tg-landing-link::after {{
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(7, 27, 61, 0.00) 62%, rgba(7, 27, 61, 0.28) 100%);
+            pointer-events: none;
+          }}
+          .tg-enter-pill {{
+            position: absolute;
+            right: clamp(20px, 4vw, 56px);
+            bottom: clamp(20px, 5vh, 56px);
+            z-index: 2;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: 8px;
+            padding: 10px 18px;
+            color: #ffffff;
+            background: rgba(7, 27, 61, 0.68);
+            font: 700 15px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            backdrop-filter: blur(10px);
+          }}
+          .tg-fallback-title {{
+            height: 100vh;
+            display: grid;
+            place-items: center;
+            color: white;
+            font: 800 48px/1.1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }}
+        </style>
+        <div class="tg-landing">
+          <a class="tg-landing-link" href="?enter=1" target="_self" aria-label="Enter ToxiGuard-VCC workbench">
+            {image_markup}
+            <span class="tg-enter-pill">Enter Workbench</span>
+          </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Enter Workbench", key="landing_enter_button", type="primary"):
+        st.session_state.entered_app = True
+        st.query_params["enter"] = "1"
+        st.rerun()
 
 
 def render_header(lang: str) -> None:
@@ -898,8 +1010,12 @@ def main() -> None:
         page_title="ToxiGuard Platform Ver.3",
         page_icon="TG",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
     )
+    if should_show_landing():
+        render_landing()
+        return
+
     initialize_state()
     with st.sidebar:
         lang_label = st.radio(tr("ko", "language"), ["한국어", "English"], horizontal=True)

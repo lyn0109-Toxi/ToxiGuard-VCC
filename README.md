@@ -14,6 +14,7 @@ It is isolated from the existing CTI, SOP Gate, Revenue, and static web apps.
 
 ## What Is Included
 
+- Full-screen ToxiGuard Platform landing image that enters the app on click
 - Korean / English screen switch
 - Product profile sidebar
 - P.1-P.8 evidence map with source, owner, risk, and next action
