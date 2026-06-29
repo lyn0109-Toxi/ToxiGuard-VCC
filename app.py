@@ -900,25 +900,40 @@ def render_header(lang: str) -> None:
           .tg-icon-nav {{
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 10px;
-            margin: -2px 0 24px;
+            gap: 8px;
+            margin: -2px 0 22px;
+            padding: 10px;
+            border: 1px solid #dce6f0;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #f8fbfd, #eef5f8);
+            box-shadow: 0 14px 34px rgba(7, 27, 61, 0.07);
           }}
           .tg-nav-item {{
-            min-height: 126px;
+            min-height: 116px;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 13px;
-            border: 1px solid #d9e3ef;
-            border-top: 4px solid var(--tg-accent, #087f86);
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            padding: 10px 8px 9px;
+            border: 1px solid transparent;
             border-radius: 8px;
             background: #ffffff;
             color: #071b3d !important;
             text-decoration: none !important;
-            box-shadow: 0 10px 24px rgba(7, 27, 61, 0.06);
-            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(7, 27, 61, 0.05);
+            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+          }}
+          .tg-nav-item::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 4px;
+            background: var(--tg-accent, #087f86);
+            opacity: 0.88;
           }}
           .tg-nav-item:hover,
           .tg-nav-item:focus-visible {{
@@ -928,57 +943,78 @@ def render_header(lang: str) -> None:
             outline: none;
           }}
           .tg-nav-item[aria-current="page"] {{
-            background: linear-gradient(180deg, var(--tg-accent-soft, #e2f4f2), #ffffff 64%);
+            background: linear-gradient(180deg, var(--tg-accent-soft, #e2f4f2), #ffffff 72%);
             border-color: color-mix(in srgb, var(--tg-accent, #087f86) 64%, white);
             box-shadow: 0 18px 36px rgba(7, 27, 61, 0.14);
           }}
           .tg-nav-icon {{
             display: inline-grid;
             place-items: center;
-            width: 52px;
-            height: 52px;
-            flex: 0 0 52px;
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
             border-radius: 8px;
             color: var(--tg-accent-strong, #006068);
             background: var(--tg-accent-soft, #e2f4f2);
             border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 30%, white);
+            margin-top: 4px;
           }}
           .tg-nav-icon .tg-icon {{
-            width: 29px;
-            height: 29px;
+            width: 27px;
+            height: 27px;
           }}
           .tg-nav-item[aria-current="page"] .tg-nav-icon {{
             color: #ffffff;
             background: var(--tg-accent, #087f86);
             border-color: var(--tg-accent, #087f86);
           }}
+          .tg-nav-copy {{
+            display: block;
+            width: 100%;
+            min-width: 0;
+          }}
           .tg-nav-label {{
+            display: block;
+            width: 100%;
             margin: 0;
             color: #071b3d;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 900;
-            line-height: 1.2;
+            line-height: 1.18;
+            overflow-wrap: break-word;
+            word-break: keep-all;
           }}
           .tg-nav-desc {{
+            display: block;
+            width: 100%;
             margin: 4px 0 0;
             color: #68758a;
-            font-size: 0.74rem;
+            font-size: 0.68rem;
             font-weight: 750;
-            line-height: 1.25;
+            line-height: 1.2;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
           }}
           .tg-nav-state {{
-            min-height: 22px;
-            display: inline-flex;
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            min-height: 18px;
+            display: none;
             align-items: center;
             border-radius: 999px;
-            padding: 3px 8px;
+            padding: 2px 7px;
             color: transparent;
             background: transparent;
-            font-size: 0.68rem;
+            font-size: 0.62rem;
             font-weight: 900;
             text-transform: uppercase;
+            letter-spacing: 0;
           }}
           .tg-nav-item[aria-current="page"] .tg-nav-state {{
+            display: inline-flex;
             color: var(--tg-accent-strong, #006068);
             background: var(--tg-accent-soft, #e2f4f2);
           }}
@@ -1279,16 +1315,36 @@ def render_header(lang: str) -> None:
               grid-template-columns: 1fr;
             }}
             .tg-icon-nav {{
-              grid-template-columns: repeat(2, minmax(0, 1fr));
+              display: flex;
+              overflow-x: auto;
+              overflow-y: hidden;
+              gap: 8px;
+              padding: 8px;
+              scroll-snap-type: x mandatory;
+              -webkit-overflow-scrolling: touch;
             }}
             .tg-nav-item {{
-              min-height: 118px;
-              padding: 12px;
+              flex: 0 0 132px;
+              min-height: 112px;
+              padding: 10px 8px 8px;
+              scroll-snap-align: start;
             }}
             .tg-nav-icon {{
-              width: 48px;
-              height: 48px;
-              flex-basis: 48px;
+              width: 44px;
+              height: 44px;
+              flex-basis: 44px;
+            }}
+            .tg-nav-icon .tg-icon {{
+              width: 25px;
+              height: 25px;
+            }}
+            .tg-nav-label {{
+              font-size: 0.8rem;
+            }}
+            .tg-nav-desc {{
+              display: none;
+              font-size: 0.66rem;
+              -webkit-line-clamp: 1;
             }}
             .tg-section-intro {{
               align-items: flex-start;
@@ -1371,7 +1427,7 @@ def render_icon_nav(lang: str, current_page: str) -> None:
             f'<a class="tg-nav-item tg-tone-{escape(str(item["tone"]))}" href="?enter=1&page={escape(key)}" '
             f'target="_self" aria-label="{escape(label)}"{active_attr}>'
             f'<span class="tg-nav-icon">{svg_icon(str(item["icon"]))}</span>'
-            f'<span>'
+            f'<span class="tg-nav-copy">'
             f'<span class="tg-nav-label">{escape(label)}</span>'
             f'<span class="tg-nav-desc">{escape(str(item["description"]))}</span>'
             f'</span>'
