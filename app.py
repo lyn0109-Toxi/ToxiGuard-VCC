@@ -82,6 +82,8 @@ TEXT: dict[str, dict[str, str]] = {
 MODULES = [
     {
         "no": "1",
+        "icon": "network",
+        "tone": "teal",
         "title": "3.2.P Evidence Map",
         "status": "Live in Ver.3",
         "output": "P.1-P.8 evidence map, gap list, reviewer question seed",
@@ -89,6 +91,8 @@ MODULES = [
     },
     {
         "no": "2",
+        "icon": "target",
+        "tone": "amber",
         "title": "P.5.6 Specification Rationale",
         "status": "Live in Ver.3",
         "output": "Specification rationale table and acceptance criteria memo",
@@ -96,6 +100,8 @@ MODULES = [
     },
     {
         "no": "3",
+        "icon": "bridge",
+        "tone": "blue",
         "title": "DMF-to-DP Bridge",
         "status": "Live in Ver.3",
         "output": "API-to-drug-product bridge table and change impact note",
@@ -103,6 +109,8 @@ MODULES = [
     },
     {
         "no": "4",
+        "icon": "calculator",
+        "tone": "orange",
         "title": "Calculation / Validation Review",
         "status": "Live in Ver.3 + SOP Gate link",
         "output": "Sample prep concentration, dilution factor, LOD/LOQ %, intercept risk",
@@ -110,12 +118,90 @@ MODULES = [
     },
     {
         "no": "5",
+        "icon": "file_pen",
+        "tone": "green",
         "title": "CMC RA Response Memo",
         "status": "Live in Ver.3 draft",
         "output": "Response memo, required evidence, CTD update action table",
         "risk": "Answer draft not connected to source evidence or owner",
     },
 ]
+
+
+NAV_ITEMS = [
+    {
+        "key": "dashboard",
+        "label_key": "dashboard",
+        "description": "Evidence overview",
+        "icon": "gauge",
+        "tone": "blue",
+    },
+    {
+        "key": "evidence",
+        "label_key": "evidence_map",
+        "description": "CTD source map",
+        "icon": "network",
+        "tone": "teal",
+    },
+    {
+        "key": "spec",
+        "label_key": "spec_rationale",
+        "description": "P.5.6 rationale",
+        "icon": "target",
+        "tone": "amber",
+    },
+    {
+        "key": "dmf",
+        "label_key": "dmf_bridge",
+        "description": "API-to-DP bridge",
+        "icon": "bridge",
+        "tone": "blue",
+    },
+    {
+        "key": "validation",
+        "label_key": "validation",
+        "description": "Concentration gate",
+        "icon": "calculator",
+        "tone": "orange",
+    },
+    {
+        "key": "response",
+        "label_key": "response",
+        "description": "RA response memo",
+        "icon": "file_pen",
+        "tone": "green",
+    },
+    {
+        "key": "launcher",
+        "label_key": "launcher",
+        "description": "Connected apps",
+        "icon": "database",
+        "tone": "blue",
+    },
+]
+
+
+ICON_SVG = {
+    "network": '<rect x="9" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="15.5" width="6" height="6" rx="1.2"/><rect x="15.5" y="15.5" width="6" height="6" rx="1.2"/><path d="M12 8.5v4"/><path d="m5.5 15.5 6.5-3 6.5 3"/>',
+    "target": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2.5v3"/><path d="M21.5 12h-3"/><path d="M12 21.5v-3"/><path d="M2.5 12h3"/>',
+    "bridge": '<path d="M3 17h18"/><path d="M5 17V9"/><path d="M19 17V9"/><path d="M7 17c.8-4.7 2.7-7 5-7s4.2 2.3 5 7"/><path d="M3 9h18"/><path d="M8 9v8"/><path d="M16 9v8"/>',
+    "calculator": '<rect x="5" y="2.8" width="14" height="18.4" rx="2"/><path d="M8 6.5h8"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>',
+    "file_pen": '<path d="M14 2.8H7a2 2 0 0 0-2 2v14.4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2.8V8h5"/><path d="M8 13h4"/><path d="M8 17h2.5"/><path d="m13.5 17.5 4.6-4.6 1.4 1.4-4.6 4.6-2 .6z"/>',
+    "gauge": '<path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/><path d="M4 19h16"/><path d="M7 15h.01"/><path d="M17 15h.01"/>',
+    "alert": '<path d="m12 3 9 16H3z"/><path d="M12 8v5"/><path d="M12 17h.01"/>',
+    "shield": '<path d="M12 2.8 19 6v5.5c0 4.2-2.8 7.9-7 9.7-4.2-1.8-7-5.5-7-9.7V6z"/><path d="m8.8 12.2 2.2 2.2 4.6-5"/>',
+    "database": '<ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5"/><path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    "trend": '<path d="M4 19h16"/><path d="M5 15l4-4 3 3 6-7"/><path d="M15 7h3v3"/>',
+}
+
+
+def svg_icon(name: str, class_name: str = "tg-icon") -> str:
+    body = ICON_SVG.get(name, ICON_SVG["shield"])
+    return (
+        f'<svg class="{class_name}" viewBox="0 0 24 24" aria-hidden="true" '
+        f'focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" '
+        f'stroke-linecap="round" stroke-linejoin="round">{body}</svg>'
+    )
 
 
 STATUS_OPTIONS = ["Ready", "Partial", "Gap", "N/A"]
@@ -437,6 +523,96 @@ def evaluate_rule(row: pd.Series) -> str:
     return "Info"
 
 
+def calculate_sample_prep(
+    reference_conc: float,
+    level_pct: float,
+    weighed_mg: float,
+    purity_pct: float,
+    stock_volume_ml: float,
+    aliquot_ml: float,
+    final_volume_ml: float,
+    dilution_factor: float,
+) -> dict[str, float | str | None]:
+    stock_conc = weighed_mg * (purity_pct / 100.0) * 1000.0 / stock_volume_ml
+    final_conc = stock_conc * aliquot_ml / final_volume_ml / dilution_factor
+    target_conc = reference_conc * level_pct / 100.0
+
+    if target_conc <= 0:
+        if abs(final_conc) <= 1e-12:
+            return {
+                "stock_conc": stock_conc,
+                "final_conc": final_conc,
+                "target_conc": target_conc,
+                "diff_pct": 0.0,
+                "gate": "Pass",
+                "message": "Sample prep gate: Pass. Blank or zero-level preparation has no analyte concentration.",
+            }
+        return {
+            "stock_conc": stock_conc,
+            "final_conc": final_conc,
+            "target_conc": target_conc,
+            "diff_pct": None,
+            "gate": "Hold",
+            "message": "Sample prep gate: Hold. Target concentration is zero, but the prepared solution contains analyte.",
+        }
+
+    diff_pct = (final_conc - target_conc) / target_conc * 100.0
+    if abs(diff_pct) <= 2:
+        gate = "Pass"
+        message = "Sample prep gate: Pass. Actual theoretical concentration is close to target."
+    elif abs(diff_pct) <= 5:
+        gate = "Review"
+        message = "Sample prep gate: Review. Check weighing, purity correction, volume, and dilution factor."
+    else:
+        gate = "Hold"
+        message = "Sample prep gate: Hold. The prepared concentration does not support the target validation level."
+
+    return {
+        "stock_conc": stock_conc,
+        "final_conc": final_conc,
+        "target_conc": target_conc,
+        "diff_pct": diff_pct,
+        "gate": gate,
+        "message": message,
+    }
+
+
+def evaluate_lod_linearity(
+    reference_conc: float,
+    lod: float,
+    loq: float,
+    r2: float,
+    intercept: float,
+    response_100: float,
+    response_loq: float,
+    lowest_level_pct: float,
+) -> dict[str, float | list[str]]:
+    lod_pct = lod / reference_conc * 100.0
+    loq_pct = loq / reference_conc * 100.0
+    intercept_100_pct = abs(intercept) / response_100 * 100.0
+    intercept_loq_pct = abs(intercept) / response_loq * 100.0
+
+    notes: list[str] = []
+    if r2 < 0.99:
+        notes.append("Linearity R2 is below 0.99. Regression suitability is high risk.")
+    if intercept_100_pct > 2.0:
+        notes.append("Intercept is greater than 2% of the 100% response. Check blank, impurity/water contribution, and calibration range.")
+    if intercept_loq_pct > 5.0:
+        notes.append("Intercept is greater than 5% of the LOQ response. Low-level validation can be biased even when R2 is high.")
+    if loq_pct > lowest_level_pct:
+        notes.append("LOQ is higher than the lowest linearity level. Recheck range design.")
+    if not notes:
+        notes.append("LOD/LOQ and intercept risk are acceptable for the current reference concentration.")
+
+    return {
+        "lod_pct": lod_pct,
+        "loq_pct": loq_pct,
+        "intercept_100_pct": intercept_100_pct,
+        "intercept_loq_pct": intercept_loq_pct,
+        "notes": notes,
+    }
+
+
 def risk_badge(label: str) -> None:
     if label == "Go":
         st.success(f"Decision gate: {label}")
@@ -459,6 +635,15 @@ def entered_from_query() -> bool:
     if isinstance(value, list):
         value = value[0] if value else ""
     return str(value).lower() in {"1", "true", "yes", "app", "workbench"}
+
+
+def current_page_key() -> str:
+    allowed = {str(item["key"]) for item in NAV_ITEMS}
+    value = st.query_params.get("page", "dashboard")
+    if isinstance(value, list):
+        value = value[0] if value else "dashboard"
+    page = str(value).lower()
+    return page if page in allowed else "dashboard"
 
 
 def should_show_landing() -> bool:
@@ -514,25 +699,65 @@ def render_landing() -> None:
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(7, 27, 61, 0.00) 62%, rgba(7, 27, 61, 0.28) 100%);
+            background:
+              linear-gradient(180deg, rgba(7, 27, 61, 0.00) 48%, rgba(7, 27, 61, 0.38) 100%),
+              radial-gradient(circle at 50% 86%, rgba(8, 127, 134, 0.28), rgba(7, 27, 61, 0.00) 34%);
             pointer-events: none;
           }}
-          .tg-enter-pill {{
+          .tg-enter-panel {{
             position: absolute;
-            right: clamp(20px, 4vw, 56px);
-            bottom: clamp(20px, 5vh, 56px);
+            left: 50%;
+            bottom: clamp(24px, 6vh, 68px);
+            transform: translateX(-50%);
             z-index: 2;
-            min-height: 44px;
+            width: min(520px, calc(100vw - 40px));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+          }}
+          .tg-enter-button {{
+            min-height: 70px;
+            width: min(360px, 100%);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.75);
+            border: 2px solid rgba(255, 255, 255, 0.88);
             border-radius: 8px;
-            padding: 10px 18px;
+            padding: 14px 28px;
             color: #ffffff;
-            background: rgba(7, 27, 61, 0.68);
-            font: 700 15px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            backdrop-filter: blur(10px);
+            background: rgba(7, 27, 61, 0.82);
+            box-shadow: 0 18px 44px rgba(7, 27, 61, 0.38);
+            font: 900 20px/1.15 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            backdrop-filter: blur(12px);
+            transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+          }}
+          .tg-enter-button::after {{
+            content: ">";
+            margin-left: 14px;
+            font-size: 24px;
+            line-height: 1;
+          }}
+          .tg-enter-note {{
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(7, 27, 61, 0.54);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 999px;
+            padding: 7px 13px;
+            font: 750 13px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            backdrop-filter: blur(8px);
+          }}
+          .tg-landing-link:hover .tg-enter-button,
+          .tg-landing-link:focus-visible .tg-enter-button {{
+            transform: translateY(-2px);
+            background: rgba(8, 127, 134, 0.94);
+            border-color: #ffffff;
+          }}
+          .tg-landing-link:focus-visible {{
+            outline: 4px solid #89f1ee;
+            outline-offset: -8px;
           }}
           .tg-fallback-title {{
             height: 100vh;
@@ -545,7 +770,10 @@ def render_landing() -> None:
         <div class="tg-landing">
           <a class="tg-landing-link" href="?enter=1" target="_self" aria-label="Enter ToxiGuard-VCC workbench">
             {image_markup}
-            <span class="tg-enter-pill">Enter Workbench</span>
+            <span class="tg-enter-panel">
+              <span class="tg-enter-button">Start Workbench</span>
+              <span class="tg-enter-note">Click the image or this button to enter</span>
+            </span>
           </a>
         </div>
         """,
@@ -563,6 +791,10 @@ def render_header(lang: str) -> None:
         f'background-image: linear-gradient(90deg, rgba(7, 27, 61, 0.88), rgba(7, 27, 61, 0.55)), url("{image_src}");'
         if image_src
         else "background: #071b3d;"
+    )
+    hero_pills = "".join(
+        f'<span class="tg-tone-{escape(module["tone"])}">{svg_icon(str(module["icon"]))}{escape(module["title"].replace(" Review", ""))}</span>'
+        for module in MODULES
     )
     st.markdown(
         f"""
@@ -608,6 +840,36 @@ def render_header(lang: str) -> None:
             font-size: 1rem;
             line-height: 1.55;
           }}
+          .tg-icon {{
+            width: 24px;
+            height: 24px;
+            flex: 0 0 auto;
+          }}
+          .tg-tone-teal {{
+            --tg-accent: #087f86;
+            --tg-accent-strong: #006068;
+            --tg-accent-soft: #e2f4f2;
+          }}
+          .tg-tone-amber {{
+            --tg-accent: #b57900;
+            --tg-accent-strong: #735000;
+            --tg-accent-soft: #fff2cf;
+          }}
+          .tg-tone-blue {{
+            --tg-accent: #2867b2;
+            --tg-accent-strong: #0b3d76;
+            --tg-accent-soft: #e7f0fb;
+          }}
+          .tg-tone-orange {{
+            --tg-accent: #c45b1d;
+            --tg-accent-strong: #8b3710;
+            --tg-accent-soft: #fde7dc;
+          }}
+          .tg-tone-green {{
+            --tg-accent: #2f7d46;
+            --tg-accent-strong: #1d5630;
+            --tg-accent-soft: #e5f4e9;
+          }}
           .tg-hero-pills {{
             display: flex;
             flex-wrap: wrap;
@@ -625,9 +887,100 @@ def render_header(lang: str) -> None:
             font-weight: 800;
           }}
           .tg-hero-pills span {{
+            gap: 7px;
             border: 1px solid rgba(255, 255, 255, 0.36);
             color: #ffffff;
             background: rgba(255, 255, 255, 0.12);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+          }}
+          .tg-hero-pills .tg-icon {{
+            width: 17px;
+            height: 17px;
+          }}
+          .tg-icon-nav {{
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+            margin: -2px 0 24px;
+          }}
+          .tg-nav-item {{
+            min-height: 126px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 13px;
+            border: 1px solid #d9e3ef;
+            border-top: 4px solid var(--tg-accent, #087f86);
+            border-radius: 8px;
+            background: #ffffff;
+            color: #071b3d !important;
+            text-decoration: none !important;
+            box-shadow: 0 10px 24px rgba(7, 27, 61, 0.06);
+            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+          }}
+          .tg-nav-item:hover,
+          .tg-nav-item:focus-visible {{
+            transform: translateY(-2px);
+            border-color: color-mix(in srgb, var(--tg-accent, #087f86) 58%, white);
+            box-shadow: 0 16px 32px rgba(7, 27, 61, 0.12);
+            outline: none;
+          }}
+          .tg-nav-item[aria-current="page"] {{
+            background: linear-gradient(180deg, var(--tg-accent-soft, #e2f4f2), #ffffff 64%);
+            border-color: color-mix(in srgb, var(--tg-accent, #087f86) 64%, white);
+            box-shadow: 0 18px 36px rgba(7, 27, 61, 0.14);
+          }}
+          .tg-nav-icon {{
+            display: inline-grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            flex: 0 0 52px;
+            border-radius: 8px;
+            color: var(--tg-accent-strong, #006068);
+            background: var(--tg-accent-soft, #e2f4f2);
+            border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 30%, white);
+          }}
+          .tg-nav-icon .tg-icon {{
+            width: 29px;
+            height: 29px;
+          }}
+          .tg-nav-item[aria-current="page"] .tg-nav-icon {{
+            color: #ffffff;
+            background: var(--tg-accent, #087f86);
+            border-color: var(--tg-accent, #087f86);
+          }}
+          .tg-nav-label {{
+            margin: 0;
+            color: #071b3d;
+            font-size: 0.9rem;
+            font-weight: 900;
+            line-height: 1.2;
+          }}
+          .tg-nav-desc {{
+            margin: 4px 0 0;
+            color: #68758a;
+            font-size: 0.74rem;
+            font-weight: 750;
+            line-height: 1.25;
+          }}
+          .tg-nav-state {{
+            min-height: 22px;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            color: transparent;
+            background: transparent;
+            font-size: 0.68rem;
+            font-weight: 900;
+            text-transform: uppercase;
+          }}
+          .tg-nav-item[aria-current="page"] .tg-nav-state {{
+            color: var(--tg-accent-strong, #006068);
+            background: var(--tg-accent-soft, #e2f4f2);
           }}
           .tg-kpi-grid {{
             display: grid;
@@ -644,6 +997,41 @@ def render_header(lang: str) -> None:
           }}
           .tg-kpi-card {{
             padding: 16px 18px;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--tg-accent, #087f86);
+          }}
+          .tg-kpi-card::after {{
+            content: "";
+            position: absolute;
+            width: 96px;
+            height: 96px;
+            right: -32px;
+            top: -42px;
+            border-radius: 999px;
+            background: var(--tg-accent-soft, #e2f4f2);
+          }}
+          .tg-kpi-head {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+          }}
+          .tg-kpi-icon {{
+            display: inline-grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            border-radius: 8px;
+            color: var(--tg-accent-strong, #006068);
+            background: var(--tg-accent-soft, #e2f4f2);
+            border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 28%, white);
+          }}
+          .tg-kpi-icon .tg-icon {{
+            width: 23px;
+            height: 23px;
           }}
           .tg-kpi-label {{
             color: #68758a;
@@ -657,11 +1045,15 @@ def render_header(lang: str) -> None:
             font-size: 1.85rem;
             font-weight: 900;
             line-height: 1.1;
+            position: relative;
+            z-index: 1;
           }}
           .tg-kpi-note {{
             margin-top: 6px;
             color: #5d6a7f;
             font-size: 0.88rem;
+            position: relative;
+            z-index: 1;
           }}
           .tg-section-title {{
             margin: 18px 0 10px;
@@ -676,8 +1068,25 @@ def render_header(lang: str) -> None:
             margin-bottom: 24px;
           }}
           .tg-module-card {{
-            min-height: 245px;
+            min-height: 268px;
             padding: 16px;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px solid var(--tg-accent, #087f86);
+            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+          }}
+          .tg-module-card::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 84px;
+            background: linear-gradient(180deg, var(--tg-accent-soft, #e2f4f2), rgba(255, 255, 255, 0));
+            opacity: 0.82;
+            pointer-events: none;
+          }}
+          .tg-module-card:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 18px 38px rgba(7, 27, 61, 0.13);
           }}
           .tg-module-top {{
             display: flex;
@@ -685,6 +1094,30 @@ def render_header(lang: str) -> None:
             justify-content: space-between;
             gap: 10px;
             margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+          }}
+          .tg-module-identity {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+          }}
+          .tg-module-icon {{
+            display: inline-grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            flex: 0 0 54px;
+            border-radius: 8px;
+            color: var(--tg-accent-strong, #006068);
+            background: #ffffff;
+            border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 30%, white);
+            box-shadow: 0 10px 24px rgba(7, 27, 61, 0.1);
+          }}
+          .tg-module-icon .tg-icon {{
+            width: 29px;
+            height: 29px;
           }}
           .tg-step {{
             display: inline-grid;
@@ -693,13 +1126,15 @@ def render_header(lang: str) -> None:
             height: 30px;
             border-radius: 999px;
             color: #ffffff;
-            background: #087f86;
+            background: var(--tg-accent, #087f86);
             font-weight: 900;
             font-size: 0.86rem;
+            box-shadow: 0 8px 16px color-mix(in srgb, var(--tg-accent, #087f86) 30%, transparent);
           }}
           .tg-status-pill {{
-            color: #006068;
-            background: #d9f2f0;
+            color: var(--tg-accent-strong, #006068);
+            background: var(--tg-accent-soft, #d9f2f0);
+            border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 26%, white);
           }}
           .tg-module-card h3 {{
             min-height: 52px;
@@ -707,12 +1142,16 @@ def render_header(lang: str) -> None:
             color: #071b3d;
             font-size: 1rem;
             line-height: 1.25;
+            position: relative;
+            z-index: 1;
           }}
           .tg-module-card p {{
             margin: 0 0 12px 0;
             color: #4c5b70;
             font-size: 0.88rem;
             line-height: 1.45;
+            position: relative;
+            z-index: 1;
           }}
           .tg-risk {{
             border-top: 1px solid #e7eef6;
@@ -720,15 +1159,112 @@ def render_header(lang: str) -> None:
             color: #735000;
             font-size: 0.8rem;
             line-height: 1.4;
+            position: relative;
+            z-index: 1;
+          }}
+          .tg-section-intro {{
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 4px 0 18px;
+            padding: 16px 18px;
+            border: 1px solid #d9e3ef;
+            border-left: 5px solid var(--tg-accent, #087f86);
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--tg-accent-soft, #e2f4f2), #ffffff 55%);
+          }}
+          .tg-section-icon {{
+            display: inline-grid;
+            place-items: center;
+            width: 50px;
+            height: 50px;
+            flex: 0 0 50px;
+            border-radius: 8px;
+            color: var(--tg-accent-strong, #006068);
+            background: #ffffff;
+            border: 1px solid color-mix(in srgb, var(--tg-accent, #087f86) 28%, white);
+            box-shadow: 0 10px 22px rgba(7, 27, 61, 0.08);
+          }}
+          .tg-section-icon .tg-icon {{
+            width: 28px;
+            height: 28px;
+          }}
+          .tg-section-copy h2 {{
+            margin: 0 0 4px;
+            color: #071b3d;
+            font-size: 1.18rem;
+            line-height: 1.22;
+          }}
+          .tg-section-copy p {{
+            margin: 0;
+            color: #4c5b70;
+            line-height: 1.45;
+          }}
+          .tg-mini-heading {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 18px 0 8px;
+            color: #071b3d;
+            font-size: 1.02rem;
+            font-weight: 900;
+          }}
+          .tg-mini-heading .tg-icon {{
+            width: 20px;
+            height: 20px;
+            color: var(--tg-accent, #087f86);
+          }}
+          .tg-launcher-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 10px 0 18px;
+          }}
+          .tg-launcher-card {{
+            border: 1px solid #d9e3ef;
+            border-top: 4px solid var(--tg-accent, #087f86);
+            border-radius: 8px;
+            padding: 15px;
+            background: #ffffff;
+            box-shadow: 0 12px 30px rgba(7, 27, 61, 0.07);
+          }}
+          .tg-launcher-card h3 {{
+            margin: 10px 0 6px;
+            color: #071b3d;
+            font-size: 1rem;
+            line-height: 1.25;
+          }}
+          .tg-launcher-card p {{
+            margin: 0;
+            color: #4c5b70;
+            font-size: 0.88rem;
+            line-height: 1.4;
           }}
           .tg-context-table {{
             margin-top: 10px;
           }}
+          [data-testid="collapsedControl"] button,
+          [data-testid="stSidebarCollapseButton"] button,
+          [data-testid="stSidebarCollapsedControl"] button {{
+            min-width: 44px !important;
+            min-height: 44px !important;
+            border-radius: 8px !important;
+            border: 1px solid #bddfdf !important;
+            background: #f2fbfa !important;
+            color: #006068 !important;
+            box-shadow: 0 8px 18px rgba(7, 27, 61, 0.1) !important;
+          }}
           @media (max-width: 1000px) {{
+            .tg-icon-nav {{
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+            }}
             .tg-module-grid {{
               grid-template-columns: repeat(2, minmax(0, 1fr));
             }}
             .tg-kpi-grid {{
+              grid-template-columns: 1fr;
+            }}
+            .tg-launcher-grid {{
               grid-template-columns: 1fr;
             }}
           }}
@@ -742,6 +1278,27 @@ def render_header(lang: str) -> None:
             .tg-module-grid {{
               grid-template-columns: 1fr;
             }}
+            .tg-icon-nav {{
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }}
+            .tg-nav-item {{
+              min-height: 118px;
+              padding: 12px;
+            }}
+            .tg-nav-icon {{
+              width: 48px;
+              height: 48px;
+              flex-basis: 48px;
+            }}
+            .tg-section-intro {{
+              align-items: flex-start;
+              padding: 14px;
+            }}
+            .tg-section-icon {{
+              width: 44px;
+              height: 44px;
+              flex-basis: 44px;
+            }}
           }}
         </style>
         <section class="tg-app-hero" style='{background}'>
@@ -750,11 +1307,7 @@ def render_header(lang: str) -> None:
             <h1>ToxiGuard-VCC</h1>
             <p>{escape(tr(lang, "positioning"))}</p>
             <div class="tg-hero-pills">
-              <span>3.2.P Evidence Map</span>
-              <span>P.5.6 Rationale</span>
-              <span>DMF Bridge</span>
-              <span>Validation Gate</span>
-              <span>Response Memo</span>
+              {hero_pills}
             </div>
           </div>
         </section>
@@ -784,24 +1337,94 @@ def render_sidebar(lang: str) -> dict[str, Any]:
     }
 
 
+def section_header(title: str, help_text: str, icon: str, tone: str) -> None:
+    st.markdown(
+        f"""
+        <section class="tg-section-intro tg-tone-{escape(tone)}">
+          <span class="tg-section-icon">{svg_icon(icon)}</span>
+          <div class="tg-section-copy">
+            <h2>{escape(title)}</h2>
+            <p>{escape(help_text)}</p>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def mini_heading(title: str, icon: str, tone: str) -> None:
+    st.markdown(
+        f'<div class="tg-mini-heading tg-tone-{escape(tone)}">{svg_icon(icon)}<span>{escape(title)}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_icon_nav(lang: str, current_page: str) -> None:
+    items = []
+    for item in NAV_ITEMS:
+        key = str(item["key"])
+        label = tr(lang, str(item["label_key"]))
+        is_active = key == current_page
+        active_attr = ' aria-current="page"' if is_active else ""
+        state_markup = '<span class="tg-nav-state">Selected</span>' if is_active else '<span class="tg-nav-state" aria-hidden="true"></span>'
+        items.append(
+            f'<a class="tg-nav-item tg-tone-{escape(str(item["tone"]))}" href="?enter=1&page={escape(key)}" '
+            f'target="_self" aria-label="{escape(label)}"{active_attr}>'
+            f'<span class="tg-nav-icon">{svg_icon(str(item["icon"]))}</span>'
+            f'<span>'
+            f'<span class="tg-nav-label">{escape(label)}</span>'
+            f'<span class="tg-nav-desc">{escape(str(item["description"]))}</span>'
+            f'</span>'
+            f'{state_markup}'
+            f'</a>'
+        )
+    st.markdown(f'<nav class="tg-icon-nav" aria-label="ToxiGuard module menu">{"".join(items)}</nav>', unsafe_allow_html=True)
+
+
+def render_selected_page(page_key: str, lang: str, profile: dict[str, Any]) -> None:
+    if page_key == "evidence":
+        render_evidence_map(lang)
+    elif page_key == "spec":
+        render_spec_rationale(lang)
+    elif page_key == "dmf":
+        render_dmf_bridge(lang)
+    elif page_key == "validation":
+        render_validation(lang)
+    elif page_key == "response":
+        render_response(lang, profile)
+    elif page_key == "launcher":
+        render_launcher(lang)
+    else:
+        render_dashboard(lang, profile)
+
+
 def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
     readiness = score_evidence(st.session_state.evidence_df)
     high_risks = count_high_risks(st.session_state.evidence_df, st.session_state.spec_df, st.session_state.dmf_df)
     gate, gate_message = decision_gate(readiness, high_risks)
     kpi_markup = f"""
     <div class="tg-kpi-grid">
-      <div class="tg-kpi-card">
-        <div class="tg-kpi-label">{escape(tr(lang, "readiness"))}</div>
+      <div class="tg-kpi-card tg-tone-teal">
+        <div class="tg-kpi-head">
+          <span class="tg-kpi-icon">{svg_icon("gauge")}</span>
+          <div class="tg-kpi-label">{escape(tr(lang, "readiness"))}</div>
+        </div>
         <div class="tg-kpi-value">{readiness}%</div>
         <div class="tg-kpi-note">P.1-P.8 source readiness</div>
       </div>
-      <div class="tg-kpi-card">
-        <div class="tg-kpi-label">{escape(tr(lang, "open_risk"))}</div>
+      <div class="tg-kpi-card tg-tone-orange">
+        <div class="tg-kpi-head">
+          <span class="tg-kpi-icon">{svg_icon("alert")}</span>
+          <div class="tg-kpi-label">{escape(tr(lang, "open_risk"))}</div>
+        </div>
         <div class="tg-kpi-value">{high_risks}</div>
         <div class="tg-kpi-note">High-risk evidence items</div>
       </div>
-      <div class="tg-kpi-card">
-        <div class="tg-kpi-label">{escape(tr(lang, "decision"))}</div>
+      <div class="tg-kpi-card tg-tone-blue">
+        <div class="tg-kpi-head">
+          <span class="tg-kpi-icon">{svg_icon("shield")}</span>
+          <div class="tg-kpi-label">{escape(tr(lang, "decision"))}</div>
+        </div>
         <div class="tg-kpi-value">{escape(gate)}</div>
         <div class="tg-kpi-note">{escape(gate_message)}</div>
       </div>
@@ -812,9 +1435,12 @@ def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
     cards = []
     for module in MODULES:
         cards.append(
-            f'<article class="tg-module-card">'
+            f'<article class="tg-module-card tg-tone-{escape(str(module["tone"]))}">'
             f'<div class="tg-module-top">'
+            f'<div class="tg-module-identity">'
+            f'<span class="tg-module-icon">{svg_icon(str(module["icon"]))}</span>'
             f'<span class="tg-step">{escape(module["no"])}</span>'
+            f'</div>'
             f'<span class="tg-status-pill">Live</span>'
             f'</div>'
             f'<h3>{escape(module["title"])}</h3>'
@@ -829,7 +1455,7 @@ def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### Decision context")
+    mini_heading("Decision context", "shield", "blue")
     st.dataframe(
         pd.DataFrame(
             [
@@ -848,8 +1474,7 @@ def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
 
 
 def render_evidence_map(lang: str) -> None:
-    st.subheader(tr(lang, "evidence_map"))
-    st.write(tr(lang, "evidence_map_help"))
+    section_header(tr(lang, "evidence_map"), tr(lang, "evidence_map_help"), "network", "teal")
     st.session_state.evidence_df = st.data_editor(
         st.session_state.evidence_df,
         width="stretch",
@@ -867,8 +1492,7 @@ def render_evidence_map(lang: str) -> None:
 
 
 def render_spec_rationale(lang: str) -> None:
-    st.subheader(tr(lang, "spec_rationale"))
-    st.write(tr(lang, "spec_help"))
+    section_header(tr(lang, "spec_rationale"), tr(lang, "spec_help"), "target", "amber")
     st.session_state.spec_df = st.data_editor(
         st.session_state.spec_df,
         width="stretch",
@@ -883,7 +1507,7 @@ def render_spec_rationale(lang: str) -> None:
         (st.session_state.spec_df["Risk"] == "High")
         | (st.session_state.spec_df["Validation status"].isin(["Partial", "Not validated"]))
     ]
-    st.markdown("#### Reviewer-risk focus")
+    mini_heading("Reviewer-risk focus", "alert", "amber")
     st.dataframe(
         weak[["Test item", "Acceptance criterion", "Validation status", "Risk", "Reviewer question"]],
         width="stretch",
@@ -892,8 +1516,7 @@ def render_spec_rationale(lang: str) -> None:
 
 
 def render_dmf_bridge(lang: str) -> None:
-    st.subheader(tr(lang, "dmf_bridge"))
-    st.write(tr(lang, "dmf_help"))
+    section_header(tr(lang, "dmf_bridge"), tr(lang, "dmf_help"), "bridge", "blue")
     st.session_state.dmf_df = st.data_editor(
         st.session_state.dmf_df,
         width="stretch",
@@ -912,7 +1535,7 @@ def render_dmf_bridge(lang: str) -> None:
         st.dataframe(high[["DMF element", "DP impact", "Action"]], width="stretch", hide_index=True)
 
 
-def concentration_review() -> dict[str, float | str]:
+def concentration_review() -> dict[str, float | str | None]:
     c1, c2, c3 = st.columns(3)
     with c1:
         reference_conc = st.number_input("Reference concentration at 100%", min_value=0.000001, value=2.5, step=0.1, format="%.6f")
@@ -927,23 +1550,33 @@ def concentration_review() -> dict[str, float | str]:
         final_volume_ml = st.number_input("Final volume after aliquot (mL)", min_value=0.000001, value=50.0, step=10.0, format="%.4f")
         dilution_factor = st.number_input("Additional dilution factor", min_value=0.000001, value=2.0, step=0.5, format="%.4f")
 
-    stock_conc = weighed_mg * (purity_pct / 100.0) * 1000.0 / stock_volume_ml
-    final_conc = stock_conc * aliquot_ml / final_volume_ml / dilution_factor
-    target_conc = reference_conc * level_pct / 100.0
-    diff_pct = ((final_conc - target_conc) / target_conc * 100.0) if target_conc else 0.0
+    calc = calculate_sample_prep(
+        reference_conc=reference_conc,
+        level_pct=level_pct,
+        weighed_mg=weighed_mg,
+        purity_pct=purity_pct,
+        stock_volume_ml=stock_volume_ml,
+        aliquot_ml=aliquot_ml,
+        final_volume_ml=final_volume_ml,
+        dilution_factor=dilution_factor,
+    )
+    stock_conc = float(calc["stock_conc"])
+    final_conc = float(calc["final_conc"])
+    target_conc = float(calc["target_conc"])
+    diff_pct = calc["diff_pct"]
 
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("Stock concentration", f"{stock_conc:.4f} {unit}")
     s2.metric("Actual final concentration", f"{final_conc:.4f} {unit}")
     s3.metric("Target concentration", f"{target_conc:.4f} {unit}")
-    s4.metric("Actual vs target", f"{diff_pct:+.2f}%")
+    s4.metric("Actual vs target", "N/A" if diff_pct is None else f"{float(diff_pct):+.2f}%")
 
-    if abs(diff_pct) <= 2:
-        st.success("Sample prep gate: Pass. Actual theoretical concentration is close to target.")
-    elif abs(diff_pct) <= 5:
-        st.warning("Sample prep gate: Review. Check weighing, purity correction, volume, and dilution factor.")
+    if calc["gate"] == "Pass":
+        st.success(str(calc["message"]))
+    elif calc["gate"] == "Review":
+        st.warning(str(calc["message"]))
     else:
-        st.error("Sample prep gate: Hold. The prepared concentration does not support the target validation level.")
+        st.error(str(calc["message"]))
 
     return {
         "reference_conc": reference_conc,
@@ -957,7 +1590,7 @@ def concentration_review() -> dict[str, float | str]:
 
 
 def linearity_and_lod_review(reference_conc: float, unit: str) -> list[str]:
-    st.markdown("#### LOD / LOQ and intercept risk")
+    mini_heading("LOD / LOQ and intercept risk", "trend", "orange")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         lod = st.number_input("LOD", min_value=0.0, value=0.05, step=0.01, format="%.6f")
@@ -972,10 +1605,20 @@ def linearity_and_lod_review(reference_conc: float, unit: str) -> list[str]:
         response_loq = st.number_input("Response at LOQ", min_value=0.000001, value=1867.5, step=50.0, format="%.4f")
         lowest_level_pct = st.number_input("Lowest linearity level %", min_value=0.0, value=20.0, step=5.0)
 
-    lod_pct = lod / reference_conc * 100.0 if reference_conc else 0.0
-    loq_pct = loq / reference_conc * 100.0 if reference_conc else 0.0
-    intercept_100_pct = abs(intercept) / response_100 * 100.0
-    intercept_loq_pct = abs(intercept) / response_loq * 100.0
+    linearity = evaluate_lod_linearity(
+        reference_conc=reference_conc,
+        lod=lod,
+        loq=loq,
+        r2=r2,
+        intercept=intercept,
+        response_100=response_100,
+        response_loq=response_loq,
+        lowest_level_pct=lowest_level_pct,
+    )
+    lod_pct = float(linearity["lod_pct"])
+    loq_pct = float(linearity["loq_pct"])
+    intercept_100_pct = float(linearity["intercept_100_pct"])
+    intercept_loq_pct = float(linearity["intercept_loq_pct"])
 
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("LOD / reference", f"{lod_pct:.2f}%")
@@ -983,19 +1626,9 @@ def linearity_and_lod_review(reference_conc: float, unit: str) -> list[str]:
     m3.metric("Intercept / 100% response", f"{intercept_100_pct:.2f}%")
     m4.metric("Intercept / LOQ response", f"{intercept_loq_pct:.2f}%")
 
-    notes: list[str] = []
-    if r2 < 0.99:
-        notes.append("Linearity R2 is below 0.99. Regression suitability is high risk.")
-    if intercept_100_pct > 2.0:
-        notes.append("Intercept is greater than 2% of the 100% response. Check blank, impurity/water contribution, and calibration range.")
-    if intercept_loq_pct > 5.0:
-        notes.append("Intercept is greater than 5% of the LOQ response. Low-level validation can be biased even when R2 is high.")
-    if loq_pct > lowest_level_pct:
-        notes.append("LOQ is higher than the lowest linearity level. Recheck range design.")
-    if not notes:
-        notes.append("LOD/LOQ and intercept risk are acceptable for the current reference concentration.")
+    notes = list(linearity["notes"])
 
-    st.markdown("#### " + tr(st.session_state.lang, "risk_notes"))
+    mini_heading(tr(st.session_state.lang, "risk_notes"), "alert", "orange")
     for note in notes:
         if "acceptable" in note:
             st.success(note)
@@ -1006,13 +1639,12 @@ def linearity_and_lod_review(reference_conc: float, unit: str) -> list[str]:
 
 
 def render_validation(lang: str) -> None:
-    st.subheader(tr(lang, "validation"))
-    st.write(tr(lang, "calc_help"))
-    st.markdown("#### " + tr(lang, "sample_prep"))
+    section_header(tr(lang, "validation"), tr(lang, "calc_help"), "calculator", "orange")
+    mini_heading(tr(lang, "sample_prep"), "calculator", "orange")
     calc = concentration_review()
     risk_notes = linearity_and_lod_review(float(calc["reference_conc"]), str(calc["unit"]))
 
-    st.markdown("#### " + tr(lang, "validation_gate"))
+    mini_heading(tr(lang, "validation_gate"), "shield", "orange")
     edited = st.data_editor(
         st.session_state.validation_df,
         width="stretch",
@@ -1098,6 +1730,26 @@ def markdown_table(df: pd.DataFrame, columns: list[str]) -> str:
     return "\n".join([header, separator, *body]) + "\n"
 
 
+def format_report_number(value: Any, decimals: int = 4) -> str:
+    if value in {None, "Not run"}:
+        return "Not run" if value == "Not run" else "N/A"
+    try:
+        return f"{float(value):.{decimals}f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def format_report_diff(value: Any) -> str:
+    if value is None:
+        return "N/A"
+    if value == "Not run":
+        return "Not run"
+    try:
+        return f"{float(value):+.2f}%"
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def build_decision_packet(profile: dict[str, Any]) -> str:
     evidence = st.session_state.evidence_df
     spec = st.session_state.spec_df
@@ -1151,10 +1803,10 @@ Generated: {date.today().isoformat()}
 
 ## Calculation / Validation Snapshot
 
-- Reference concentration: {calc.get('reference_conc', 'Not run')} {calc.get('unit', '')}
-- Actual final concentration: {calc.get('final_conc', 'Not run')} {calc.get('unit', '')}
-- Target concentration: {calc.get('target_conc', 'Not run')} {calc.get('unit', '')}
-- Actual vs target difference: {calc.get('diff_pct', 'Not run')}%
+- Reference concentration: {format_report_number(calc.get('reference_conc', 'Not run'))} {calc.get('unit', '')}
+- Actual final concentration: {format_report_number(calc.get('final_conc', 'Not run'))} {calc.get('unit', '')}
+- Target concentration: {format_report_number(calc.get('target_conc', 'Not run'))} {calc.get('unit', '')}
+- Actual vs target difference: {format_report_diff(calc.get('diff_pct', 'Not run'))}
 
 ### LOD / LOQ / Intercept Notes
 
@@ -1175,12 +1827,11 @@ This packet is a decision-support draft. It does not replace CMC, analytical, re
 
 
 def render_response(lang: str, profile: dict[str, Any]) -> None:
-    st.subheader(tr(lang, "response"))
-    st.write(tr(lang, "response_help"))
+    section_header(tr(lang, "response"), tr(lang, "response_help"), "file_pen", "green")
     rows = response_rows()
     st.dataframe(rows, width="stretch", hide_index=True)
     packet = build_decision_packet(profile)
-    st.markdown("#### CMC RA Decision Packet Preview")
+    mini_heading("CMC RA Decision Packet Preview", "file_pen", "green")
     st.text_area("Markdown preview", value=packet, height=360)
     st.download_button(
         tr(lang, "download"),
@@ -1191,8 +1842,26 @@ def render_response(lang: str, profile: dict[str, Any]) -> None:
 
 
 def render_launcher(lang: str) -> None:
-    st.subheader(tr(lang, "launcher"))
-    st.markdown("#### " + tr(lang, "available_apps"))
+    section_header(tr(lang, "launcher"), "Open connected ToxiGuard apps and plan the next evidence workbench modules.", "database", "blue")
+    mini_heading(tr(lang, "available_apps"), "database", "blue")
+    launcher_cards = [
+        ("ToxiGuard-SOP Gate", "Calculation / Validation Review", "calculator", "orange"),
+        ("Clinical Trial Intelligence", "Clinical evidence layer", "trend", "teal"),
+        ("Revenue Forecast Intelligence", "Business evidence layer", "gauge", "green"),
+    ]
+    st.markdown(
+        '<div class="tg-launcher-grid">'
+        + "".join(
+            f'<article class="tg-launcher-card tg-tone-{escape(tone)}">'
+            f'<span class="tg-section-icon">{svg_icon(icon)}</span>'
+            f'<h3>{escape(name)}</h3>'
+            f'<p>{escape(role)}</p>'
+            f'</article>'
+            for name, role, icon, tone in launcher_cards
+        )
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     available = pd.DataFrame(
         [
             {
@@ -1213,7 +1882,7 @@ def render_launcher(lang: str) -> None:
         ]
     )
     st.dataframe(available, width="stretch", hide_index=True)
-    st.markdown("#### " + tr(lang, "next_builds"))
+    mini_heading(tr(lang, "next_builds"), "trend", "blue")
     next_builds = pd.DataFrame(
         [
             ["Regulatory Framework Navigator", "ICH/FDA/EMA requirement to CTD evidence mapping"],
@@ -1244,32 +1913,9 @@ def main() -> None:
         st.session_state.lang = lang
     profile = render_sidebar(st.session_state.lang)
     render_header(st.session_state.lang)
-
-    tabs = st.tabs(
-        [
-            tr(st.session_state.lang, "dashboard"),
-            tr(st.session_state.lang, "evidence_map"),
-            tr(st.session_state.lang, "spec_rationale"),
-            tr(st.session_state.lang, "dmf_bridge"),
-            tr(st.session_state.lang, "validation"),
-            tr(st.session_state.lang, "response"),
-            tr(st.session_state.lang, "launcher"),
-        ]
-    )
-    with tabs[0]:
-        render_dashboard(st.session_state.lang, profile)
-    with tabs[1]:
-        render_evidence_map(st.session_state.lang)
-    with tabs[2]:
-        render_spec_rationale(st.session_state.lang)
-    with tabs[3]:
-        render_dmf_bridge(st.session_state.lang)
-    with tabs[4]:
-        render_validation(st.session_state.lang)
-    with tabs[5]:
-        render_response(st.session_state.lang, profile)
-    with tabs[6]:
-        render_launcher(st.session_state.lang)
+    page_key = current_page_key()
+    render_icon_nav(st.session_state.lang, page_key)
+    render_selected_page(page_key, st.session_state.lang, profile)
 
 
 if __name__ == "__main__":
