@@ -22,6 +22,7 @@ TEXT: dict[str, dict[str, str]] = {
         "positioning": "CTD 3.2.P 근거, 기준설정, DMF 연결성, 계산/밸리데이션, RA 답변 메모를 하나의 판단 흐름으로 묶는 Streamlit 작업대입니다.",
         "language": "Language / 언어",
         "product_profile": "제품 프로필",
+        "client_intake": "Client CTD Intake",
         "dashboard": "Dashboard",
         "evidence_map": "01 Evidence Map",
         "spec_rationale": "02 P.5.6 Rationale",
@@ -32,8 +33,9 @@ TEXT: dict[str, dict[str, str]] = {
         "readiness": "Evidence readiness",
         "open_risk": "Open high risks",
         "decision": "Decision gate",
-        "core_modules": "5개 핵심 CMC RA 모듈",
-        "module_help": "각 모듈은 최종 CMC RA Decision Packet의 근거 블록으로 연결됩니다.",
+        "core_modules": "컨설턴트 CMC RA 워크플로우",
+        "module_help": "고객 문서 접수부터 gap/risk 요약, 고객 질문 리스트, CTD 업데이트 방향까지 하나의 미팅 흐름으로 연결됩니다.",
+        "client_intake_help": "고객이 제공한 DMF 기반 원료 정보, 완제 제조방법, 기준 및 시험방법 자료를 접수 품질과 CTD 업데이트 관점으로 정리합니다.",
         "evidence_map_help": "P.1-P.8 자료 상태를 source, owner, risk, next action으로 관리합니다.",
         "spec_help": "품질기준이 비어 있거나 근거가 약하면 reviewer question으로 이어집니다.",
         "dmf_help": "원료 DMF 정보가 완제 CQA, 규격, 안정성, 불순물 전략을 지지하는지 확인합니다.",
@@ -45,6 +47,9 @@ TEXT: dict[str, dict[str, str]] = {
         "risk_notes": "자동 Risk Notes",
         "available_apps": "현재 연결 가능한 앱",
         "next_builds": "다음 개발 앱",
+        "meeting_summary": "고객 미팅 요약",
+        "client_questions": "고객 질문 리스트",
+        "ctd_update_direction": "CTD 업데이트 방향",
     },
     "en": {
         "page_title": "ToxiGuard Platform Ver.3",
@@ -52,6 +57,7 @@ TEXT: dict[str, dict[str, str]] = {
         "positioning": "A Streamlit workbench that connects CTD 3.2.P evidence, specification rationale, DMF linkage, calculation/validation review, and CMC RA response writing.",
         "language": "Language",
         "product_profile": "Product Profile",
+        "client_intake": "Client CTD Intake",
         "dashboard": "Dashboard",
         "evidence_map": "01 Evidence Map",
         "spec_rationale": "02 P.5.6 Rationale",
@@ -62,8 +68,9 @@ TEXT: dict[str, dict[str, str]] = {
         "readiness": "Evidence readiness",
         "open_risk": "Open high risks",
         "decision": "Decision gate",
-        "core_modules": "Five Core CMC RA Modules",
-        "module_help": "Each module becomes an evidence block in the final CMC RA Decision Packet.",
+        "core_modules": "Consultant CMC RA Workflow",
+        "module_help": "Connect client document intake, gap/risk summary, client question list, and CTD update direction into one meeting flow.",
+        "client_intake_help": "Capture the quality of client-provided DMF-based API information, drug product manufacturing, specification, and method documents against CTD update needs.",
         "evidence_map_help": "Manage P.1-P.8 evidence status by source, owner, risk, and next action.",
         "spec_help": "Missing criteria or weak rationale should become reviewer questions.",
         "dmf_help": "Check whether API DMF information supports DP CQA, specification, stability, and impurity strategy.",
@@ -75,11 +82,23 @@ TEXT: dict[str, dict[str, str]] = {
         "risk_notes": "Automatic Risk Notes",
         "available_apps": "Available Apps",
         "next_builds": "Next Builds",
+        "meeting_summary": "Client Meeting Summary",
+        "client_questions": "Client Question List",
+        "ctd_update_direction": "CTD Update Direction",
     },
 }
 
 
 MODULES = [
+    {
+        "no": "0",
+        "icon": "clipboard_check",
+        "tone": "teal",
+        "title": "Client CTD Intake",
+        "status": "Live in Ver.3",
+        "output": "Document received, intake quality, client questions, CTD update direction",
+        "risk": "Client document is received but not traceable to DMF, DP process, specification, or CTD section",
+    },
     {
         "no": "1",
         "icon": "network",
@@ -129,6 +148,13 @@ MODULES = [
 
 
 NAV_ITEMS = [
+    {
+        "key": "intake",
+        "label_key": "client_intake",
+        "description": "Client document intake",
+        "icon": "clipboard_check",
+        "tone": "teal",
+    },
     {
         "key": "dashboard",
         "label_key": "dashboard",
@@ -182,6 +208,7 @@ NAV_ITEMS = [
 
 
 ICON_SVG = {
+    "clipboard_check": '<rect x="6" y="4.2" width="12" height="17" rx="2"/><path d="M9 4.2a3 3 0 0 1 6 0"/><path d="M9 8h6"/><path d="m8.8 14 2 2 4.4-5"/><path d="M8.8 18h6.4"/>',
     "network": '<rect x="9" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="15.5" width="6" height="6" rx="1.2"/><rect x="15.5" y="15.5" width="6" height="6" rx="1.2"/><path d="M12 8.5v4"/><path d="m5.5 15.5 6.5-3 6.5 3"/>',
     "target": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2.5v3"/><path d="M21.5 12h-3"/><path d="M12 21.5v-3"/><path d="M2.5 12h3"/>',
     "bridge": '<path d="M3 17h18"/><path d="M5 17V9"/><path d="M19 17V9"/><path d="M7 17c.8-4.7 2.7-7 5-7s4.2 2.3 5 7"/><path d="M3 9h18"/><path d="M8 9v8"/><path d="M16 9v8"/>',
@@ -207,6 +234,93 @@ def svg_icon(name: str, class_name: str = "tg-icon") -> str:
 STATUS_OPTIONS = ["Ready", "Partial", "Gap", "N/A"]
 RISK_OPTIONS = ["Low", "Medium", "High"]
 VALIDATION_STATUS = ["Validated", "Partial", "Not validated", "N/A"]
+INTAKE_RECEIVED_OPTIONS = ["Received", "Partial", "Missing", "N/A"]
+INTAKE_QUALITY_OPTIONS = ["Usable", "Needs clarification", "Not usable", "N/A"]
+
+
+def default_intake_rows() -> list[dict[str, Any]]:
+    return [
+        {
+            "Intake area": "DMF authorization and version",
+            "Expected client document": "LoA, DMF holder, DMF number/version, amendment history",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "High",
+            "Consultant check": "Can the applicant reference the current DMF and confirm the version used for DP development?",
+            "Client question": "Please provide the current LoA, DMF holder contact, and the DMF version/amendment basis used for this product.",
+            "CTD update direction": "3.2.S reference / 3.2.P DMF bridge",
+        },
+        {
+            "Intake area": "API potency, assay, and water basis",
+            "Expected client document": "API COA, assay basis, KF/water, potency correction statement",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "High",
+            "Consultant check": "Does API assay/water correction flow into batch formula, assay calculation, and validation reference concentration?",
+            "Client question": "Please clarify whether the DP batch formula and analytical sample preparation use as-is, anhydrous, or potency-corrected API basis.",
+            "CTD update direction": "3.2.P.3 formula / 3.2.P.5 assay calculation",
+        },
+        {
+            "Intake area": "API impurity and degradant bridge",
+            "Expected client document": "DMF impurity list, API COA trend, degradation pathway, qualification rationale",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "High",
+            "Consultant check": "Are API impurities separated from DP degradants and controlled through shelf-life?",
+            "Client question": "Please map API impurities and DP degradation products separately, including qualification and stability trend basis.",
+            "CTD update direction": "3.2.P.5 related substances / 3.2.P.8 stability",
+        },
+        {
+            "Intake area": "Drug product formula and manufacturing method",
+            "Expected client document": "Master formula, batch formula, process flow, MFR, scale/batch size",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "High",
+            "Consultant check": "Can the DP manufacturing method be traced from formula to CPP, IPC, CQA, and release specification?",
+            "Client question": "Please provide the manufacturing flow with batch size, critical steps, IPCs, hold times, and CPP-CQA linkage.",
+            "CTD update direction": "3.2.P.3 manufacture / 3.2.P.2 development",
+        },
+        {
+            "Intake area": "Specification and test method package",
+            "Expected client document": "DP specification, test methods, acceptance criteria, method version",
+            "Received": "Received",
+            "Quality": "Needs clarification",
+            "Risk": "Medium",
+            "Consultant check": "Are acceptance criteria justified by batch data, stability, validation, literature, or clinical/BE bridge?",
+            "Client question": "Please identify the rationale source for each DP specification item and confirm method/version traceability.",
+            "CTD update direction": "3.2.P.5.1 specification / 3.2.P.5.6 justification",
+        },
+        {
+            "Intake area": "Analytical validation and batch results",
+            "Expected client document": "Validation protocol/report, sample preparation, chromatograms, batch analysis",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "High",
+            "Consultant check": "Do specificity, linearity, accuracy, precision, LOD/LOQ, and dilution factors support the stated validation levels?",
+            "Client question": "Please provide method validation raw tables, sample preparation basis, dilution factors, and batch result linkage to specification.",
+            "CTD update direction": "3.2.P.5.2 analytical procedures / 3.2.P.5.3 validation",
+        },
+        {
+            "Intake area": "Stability and shelf-life support",
+            "Expected client document": "Long-term/accelerated stability, trend table, storage condition, commitment",
+            "Received": "Missing",
+            "Quality": "Not usable",
+            "Risk": "High",
+            "Consultant check": "Can proposed shelf-life and storage condition be defended by trend and specification compliance?",
+            "Client question": "Please provide stability tables, trend analysis, storage condition justification, and any post-approval commitment plan.",
+            "CTD update direction": "3.2.P.8 stability",
+        },
+        {
+            "Intake area": "Container closure and microbiological control",
+            "Expected client document": "CCS specification, compatibility, CCI/E&L if applicable, sterility/endotoxin strategy",
+            "Received": "Partial",
+            "Quality": "Needs clarification",
+            "Risk": "Medium",
+            "Consultant check": "Does packaging and microbiological evidence support product protection, compatibility, and intended use?",
+            "Client question": "Please provide container closure compatibility/protection evidence and microbiological control strategy.",
+            "CTD update direction": "3.2.P.7 container closure / 3.2.P.5 microbiological tests",
+        },
+    ]
 
 
 def default_evidence_rows() -> list[dict[str, Any]]:
@@ -465,6 +579,7 @@ def default_validation_rows() -> list[dict[str, Any]]:
 
 def initialize_state() -> None:
     defaults = {
+        "intake_df": pd.DataFrame(default_intake_rows()),
         "evidence_df": pd.DataFrame(default_evidence_rows()),
         "spec_df": pd.DataFrame(default_spec_rows()),
         "dmf_df": pd.DataFrame(default_dmf_rows()),
@@ -485,6 +600,57 @@ def score_evidence(df: pd.DataFrame) -> float:
     if applicable.empty:
         return 0.0
     return round(float(applicable["Status"].map(weights).mean() * 100), 1)
+
+
+def score_intake(df: pd.DataFrame) -> float:
+    if df.empty:
+        return 0.0
+    received_weights = {"Received": 1.0, "Partial": 0.55, "Missing": 0.0, "N/A": 0.7}
+    quality_weights = {"Usable": 1.0, "Needs clarification": 0.5, "Not usable": 0.0, "N/A": 0.7}
+    risk_weights = {"Low": 1.0, "Medium": 0.65, "High": 0.25}
+    scores = []
+    for _, row in df.iterrows():
+        received = received_weights.get(str(row.get("Received", "")), 0.0)
+        quality = quality_weights.get(str(row.get("Quality", "")), 0.0)
+        risk = risk_weights.get(str(row.get("Risk", "")), 0.5)
+        scores.append((received * 0.4) + (quality * 0.4) + (risk * 0.2))
+    return round(float(sum(scores) / len(scores) * 100), 1)
+
+
+def intake_focus_rows(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["Intake area", "Client question", "Expected client document", "Risk", "CTD update direction"])
+    mask = (
+        df["Risk"].eq("High")
+        | df["Received"].isin(["Partial", "Missing"])
+        | df["Quality"].isin(["Needs clarification", "Not usable"])
+    )
+    focus = df[mask].copy()
+    if focus.empty:
+        return pd.DataFrame(
+            [
+                {
+                    "Intake area": "Current intake",
+                    "Client question": "No major client question is currently triggered.",
+                    "Expected client document": "Maintain source traceability",
+                    "Risk": "Low",
+                    "CTD update direction": "N/A",
+                }
+            ]
+        )
+    return focus[["Intake area", "Client question", "Expected client document", "Risk", "CTD update direction"]]
+
+
+def intake_gap_count(df: pd.DataFrame) -> int:
+    if df.empty:
+        return 0
+    return int(
+        (
+            df["Risk"].eq("High")
+            | df["Received"].isin(["Partial", "Missing"])
+            | df["Quality"].isin(["Needs clarification", "Not usable"])
+        ).sum()
+    )
 
 
 def count_high_risks(*frames: pd.DataFrame) -> int:
@@ -639,11 +805,11 @@ def entered_from_query() -> bool:
 
 def current_page_key() -> str:
     allowed = {str(item["key"]) for item in NAV_ITEMS}
-    value = st.query_params.get("page", "dashboard")
+    value = st.query_params.get("page", "intake")
     if isinstance(value, list):
-        value = value[0] if value else "dashboard"
+        value = value[0] if value else "intake"
     page = str(value).lower()
-    return page if page in allowed else "dashboard"
+    return page if page in allowed else "intake"
 
 
 def should_show_landing() -> bool:
@@ -899,7 +1065,7 @@ def render_header(lang: str) -> None:
           }}
           .tg-icon-nav {{
             display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
+            grid-template-columns: repeat(8, minmax(0, 1fr));
             gap: 8px;
             margin: -2px 0 22px;
             padding: 10px;
@@ -1020,7 +1186,7 @@ def render_header(lang: str) -> None:
           }}
           .tg-kpi-grid {{
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
             margin: 16px 0 26px;
           }}
@@ -1096,6 +1262,56 @@ def render_header(lang: str) -> None:
             color: #071b3d;
             font-size: 1.35rem;
             font-weight: 900;
+          }}
+          .tg-flow-strip {{
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+            margin: 8px 0 18px;
+          }}
+          .tg-flow-step {{
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #d9e3ef;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 20px rgba(7, 27, 61, 0.06);
+          }}
+          .tg-flow-step strong {{
+            display: block;
+            color: #071b3d;
+            font-size: 0.84rem;
+            line-height: 1.2;
+          }}
+          .tg-flow-step span {{
+            color: #68758a;
+            font-size: 0.72rem;
+            font-weight: 750;
+            line-height: 1.25;
+          }}
+          .tg-flow-index {{
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            border-radius: 8px;
+            color: #ffffff;
+            background: var(--tg-accent, #087f86);
+            font-weight: 900;
+          }}
+          .tg-summary-box {{
+            margin: 8px 0 16px;
+            padding: 16px 18px;
+            border: 1px solid #d9e3ef;
+            border-left: 5px solid var(--tg-accent, #087f86);
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--tg-accent-soft, #e2f4f2), #ffffff 70%);
+            color: #071b3d;
+            line-height: 1.5;
           }}
           .tg-module-grid {{
             display: grid;
@@ -1303,6 +1519,9 @@ def render_header(lang: str) -> None:
             .tg-launcher-grid {{
               grid-template-columns: 1fr;
             }}
+            .tg-flow-strip {{
+              grid-template-columns: 1fr;
+            }}
           }}
           @media (max-width: 640px) {{
             .tg-app-hero-inner {{
@@ -1437,8 +1656,102 @@ def render_icon_nav(lang: str, current_page: str) -> None:
     st.markdown(f'<nav class="tg-icon-nav" aria-label="ToxiGuard module menu">{"".join(items)}</nav>', unsafe_allow_html=True)
 
 
+def build_meeting_summary(profile: dict[str, Any]) -> str:
+    intake = st.session_state.intake_df
+    readiness = score_intake(intake)
+    question_count = intake_gap_count(intake)
+    high_count = int((intake["Risk"] == "High").sum()) if not intake.empty else 0
+    focus = intake_focus_rows(intake)
+    top_area = str(focus.iloc[0]["Intake area"]) if not focus.empty else "Current intake"
+    top_question = str(focus.iloc[0]["Client question"]) if not focus.empty else "No major client question is currently triggered."
+    top_update = str(focus.iloc[0]["CTD update direction"]) if not focus.empty else "N/A"
+    return (
+        f"Product: {profile['product']}\n"
+        f"Meeting purpose: convert received client documents into gap/risk summary, client questions, and CTD update direction.\n"
+        f"Intake readiness: {readiness}%\n"
+        f"Open client questions: {question_count}\n"
+        f"High-risk intake areas: {high_count}\n"
+        f"First discussion focus: {top_area}\n"
+        f"Priority client question: {top_question}\n"
+        f"Likely CTD update direction: {top_update}"
+    )
+
+
+def render_intake_flow() -> None:
+    steps = [
+        ("1", "Document received", "DMF / DP / method package"),
+        ("2", "Input", "status, quality, risk"),
+        ("3", "Gap / risk summary", "meeting-ready view"),
+        ("4", "Client questions", "evidence request list"),
+        ("5", "CTD direction", "update target section"),
+    ]
+    st.markdown(
+        '<div class="tg-flow-strip tg-tone-teal">'
+        + "".join(
+            f'<div class="tg-flow-step"><div class="tg-flow-index">{escape(no)}</div>'
+            f'<div><strong>{escape(title)}</strong><span>{escape(note)}</span></div></div>'
+            for no, title, note in steps
+        )
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_client_intake(lang: str, profile: dict[str, Any]) -> None:
+    section_header(tr(lang, "client_intake"), tr(lang, "client_intake_help"), "clipboard_check", "teal")
+    render_intake_flow()
+
+    st.session_state.intake_df = st.data_editor(
+        st.session_state.intake_df,
+        width="stretch",
+        num_rows="dynamic",
+        column_config={
+            "Received": st.column_config.SelectboxColumn("Received", options=INTAKE_RECEIVED_OPTIONS, required=True),
+            "Quality": st.column_config.SelectboxColumn("Quality", options=INTAKE_QUALITY_OPTIONS, required=True),
+            "Risk": st.column_config.SelectboxColumn("Risk", options=RISK_OPTIONS, required=True),
+        },
+        key="intake_editor",
+    )
+
+    intake = st.session_state.intake_df
+    readiness = score_intake(intake)
+    question_count = intake_gap_count(intake)
+    high_count = int((intake["Risk"] == "High").sum()) if not intake.empty else 0
+    missing_count = int((intake["Received"] == "Missing").sum()) if not intake.empty else 0
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Intake readiness", f"{readiness}%")
+    k2.metric("Client questions", question_count)
+    k3.metric("High-risk areas", high_count)
+    k4.metric("Missing documents", missing_count)
+
+    summary = build_meeting_summary(profile)
+    mini_heading(tr(lang, "meeting_summary"), "clipboard_check", "teal")
+    st.markdown(
+        f'<div class="tg-summary-box tg-tone-teal">{escape(summary).replace(chr(10), "<br>")}</div>',
+        unsafe_allow_html=True,
+    )
+
+    focus = intake_focus_rows(intake)
+    mini_heading(tr(lang, "client_questions"), "alert", "orange")
+    st.dataframe(
+        focus[["Intake area", "Client question", "Expected client document", "Risk"]],
+        width="stretch",
+        hide_index=True,
+    )
+
+    mini_heading(tr(lang, "ctd_update_direction"), "file_pen", "blue")
+    st.dataframe(
+        focus[["Intake area", "CTD update direction", "Risk"]],
+        width="stretch",
+        hide_index=True,
+    )
+
+
 def render_selected_page(page_key: str, lang: str, profile: dict[str, Any]) -> None:
-    if page_key == "evidence":
+    if page_key == "intake":
+        render_client_intake(lang, profile)
+    elif page_key == "evidence":
         render_evidence_map(lang)
     elif page_key == "spec":
         render_spec_rationale(lang)
@@ -1455,11 +1768,25 @@ def render_selected_page(page_key: str, lang: str, profile: dict[str, Any]) -> N
 
 
 def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
+    intake_readiness = score_intake(st.session_state.intake_df)
     readiness = score_evidence(st.session_state.evidence_df)
-    high_risks = count_high_risks(st.session_state.evidence_df, st.session_state.spec_df, st.session_state.dmf_df)
+    high_risks = count_high_risks(
+        st.session_state.intake_df,
+        st.session_state.evidence_df,
+        st.session_state.spec_df,
+        st.session_state.dmf_df,
+    )
     gate, gate_message = decision_gate(readiness, high_risks)
     kpi_markup = f"""
     <div class="tg-kpi-grid">
+      <div class="tg-kpi-card tg-tone-teal">
+        <div class="tg-kpi-head">
+          <span class="tg-kpi-icon">{svg_icon("clipboard_check")}</span>
+          <div class="tg-kpi-label">Intake readiness</div>
+        </div>
+        <div class="tg-kpi-value">{intake_readiness}%</div>
+        <div class="tg-kpi-note">Client document usability</div>
+      </div>
       <div class="tg-kpi-card tg-tone-teal">
         <div class="tg-kpi-head">
           <span class="tg-kpi-icon">{svg_icon("gauge")}</span>
@@ -1471,10 +1798,10 @@ def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
       <div class="tg-kpi-card tg-tone-orange">
         <div class="tg-kpi-head">
           <span class="tg-kpi-icon">{svg_icon("alert")}</span>
-          <div class="tg-kpi-label">{escape(tr(lang, "open_risk"))}</div>
+          <div class="tg-kpi-label">Client questions</div>
         </div>
-        <div class="tg-kpi-value">{high_risks}</div>
-        <div class="tg-kpi-note">High-risk evidence items</div>
+        <div class="tg-kpi-value">{intake_gap_count(st.session_state.intake_df)}</div>
+        <div class="tg-kpi-note">Questions to ask in meeting</div>
       </div>
       <div class="tg-kpi-card tg-tone-blue">
         <div class="tg-kpi-head">
@@ -1521,6 +1848,9 @@ def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
                 ["Route", profile["route"]],
                 ["Reference", profile["reference"]],
                 ["Lifecycle stage", profile["stage"]],
+                ["Client intake readiness", f"{intake_readiness}%"],
+                ["Open client questions", intake_gap_count(st.session_state.intake_df)],
+                ["Open high risks", high_risks],
             ],
             columns=["Field", "Value"],
         ),
@@ -1724,10 +2054,24 @@ def render_validation(lang: str) -> None:
 
 
 def response_rows() -> pd.DataFrame:
+    intake = st.session_state.intake_df
     evidence = st.session_state.evidence_df
     spec = st.session_state.spec_df
     dmf = st.session_state.dmf_df
     rows: list[dict[str, str]] = []
+    intake_focus = intake_focus_rows(intake)
+    for _, row in intake_focus[intake_focus["Risk"].isin(["High", "Medium"])].iterrows():
+        if str(row["Client question"]).startswith("No major"):
+            continue
+        rows.append(
+            {
+                "Question": row["Client question"],
+                "Triggered by": f"Client intake: {row['Intake area']} / {row['Risk']} risk",
+                "Evidence needed": row["Expected client document"],
+                "CTD update": row["CTD update direction"],
+                "Owner": "Client / CMC RA",
+            }
+        )
     for _, row in evidence[evidence["Risk"] == "High"].iterrows():
         rows.append(
             {
@@ -1807,17 +2151,20 @@ def format_report_diff(value: Any) -> str:
 
 
 def build_decision_packet(profile: dict[str, Any]) -> str:
+    intake = st.session_state.intake_df
     evidence = st.session_state.evidence_df
     spec = st.session_state.spec_df
     dmf = st.session_state.dmf_df
     validation = st.session_state.validation_df.copy()
     validation["Gate"] = validation.apply(evaluate_rule, axis=1)
+    intake_readiness = score_intake(intake)
     readiness = score_evidence(evidence)
-    high_risks = count_high_risks(evidence, spec, dmf)
+    high_risks = count_high_risks(intake, evidence, spec, dmf)
     gate, message = decision_gate(readiness, high_risks)
     calc = st.session_state.get("last_calc", {})
     risk_notes = st.session_state.get("last_risk_notes", ["Run Calculation / Validation tab to generate LOD/LOQ and intercept notes."])
 
+    intake_focus = intake_focus_rows(intake)
     high_evidence = evidence[evidence["Risk"] == "High"]
     high_spec = spec[spec["Risk"] == "High"]
     high_dmf = dmf[dmf["Risk"] == "High"]
@@ -1841,9 +2188,14 @@ Generated: {date.today().isoformat()}
 ## Decision Gate
 
 - Gate: **{gate}**
+- Client intake readiness: **{intake_readiness}%**
 - Evidence readiness: **{readiness}%**
 - Open high risks: **{high_risks}**
 - Interpretation: {message}
+
+## Client CTD Intake Snapshot
+
+{markdown_table(intake_focus, ["Intake area", "Client question", "Expected client document", "Risk", "CTD update direction"])}
 
 ## High-Risk CTD Evidence
 
