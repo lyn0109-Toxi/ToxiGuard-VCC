@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 from datetime import date
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -557,14 +558,209 @@ def render_landing() -> None:
 
 
 def render_header(lang: str) -> None:
-    left, right = st.columns([1.15, 0.85], vertical_alignment="center")
-    with left:
-        st.title(tr(lang, "page_title"))
-        st.caption(tr(lang, "subtitle"))
-        st.write(tr(lang, "positioning"))
-    with right:
-        if PLATFORM_IMAGE.exists():
-            st.image(str(PLATFORM_IMAGE), width="stretch")
+    image_src = platform_image_data_uri()
+    background = (
+        f'background-image: linear-gradient(90deg, rgba(7, 27, 61, 0.88), rgba(7, 27, 61, 0.55)), url("{image_src}");'
+        if image_src
+        else "background: #071b3d;"
+    )
+    st.markdown(
+        f"""
+        <style>
+          .main .block-container {{
+            max-width: 1180px;
+            padding-top: 28px;
+          }}
+          .tg-app-hero {{
+            min-height: 250px;
+            border-radius: 10px;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center center;
+            box-shadow: 0 22px 52px rgba(7, 27, 61, 0.16);
+            margin-bottom: 22px;
+          }}
+          .tg-app-hero-inner {{
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 34px 38px;
+            color: #ffffff;
+          }}
+          .tg-eyebrow {{
+            margin: 0 0 8px 0;
+            color: #89f1ee;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+          }}
+          .tg-app-hero h1 {{
+            margin: 0 0 10px 0;
+            font-size: 2.25rem;
+            line-height: 1.08;
+            letter-spacing: 0;
+          }}
+          .tg-app-hero p {{
+            max-width: 680px;
+            margin: 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            line-height: 1.55;
+          }}
+          .tg-hero-pills {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+          }}
+          .tg-hero-pills span,
+          .tg-status-pill {{
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 0.76rem;
+            font-weight: 800;
+          }}
+          .tg-hero-pills span {{
+            border: 1px solid rgba(255, 255, 255, 0.36);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+          }}
+          .tg-kpi-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 16px 0 26px;
+          }}
+          .tg-kpi-card,
+          .tg-module-card {{
+            border: 1px solid #d9e3ef;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 12px 30px rgba(7, 27, 61, 0.08);
+          }}
+          .tg-kpi-card {{
+            padding: 16px 18px;
+          }}
+          .tg-kpi-label {{
+            color: #68758a;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+          }}
+          .tg-kpi-value {{
+            margin-top: 4px;
+            color: #071b3d;
+            font-size: 1.85rem;
+            font-weight: 900;
+            line-height: 1.1;
+          }}
+          .tg-kpi-note {{
+            margin-top: 6px;
+            color: #5d6a7f;
+            font-size: 0.88rem;
+          }}
+          .tg-section-title {{
+            margin: 18px 0 10px;
+            color: #071b3d;
+            font-size: 1.35rem;
+            font-weight: 900;
+          }}
+          .tg-module-grid {{
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+          }}
+          .tg-module-card {{
+            min-height: 245px;
+            padding: 16px;
+          }}
+          .tg-module-top {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+          }}
+          .tg-step {{
+            display: inline-grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            color: #ffffff;
+            background: #087f86;
+            font-weight: 900;
+            font-size: 0.86rem;
+          }}
+          .tg-status-pill {{
+            color: #006068;
+            background: #d9f2f0;
+          }}
+          .tg-module-card h3 {{
+            min-height: 52px;
+            margin: 0 0 10px 0;
+            color: #071b3d;
+            font-size: 1rem;
+            line-height: 1.25;
+          }}
+          .tg-module-card p {{
+            margin: 0 0 12px 0;
+            color: #4c5b70;
+            font-size: 0.88rem;
+            line-height: 1.45;
+          }}
+          .tg-risk {{
+            border-top: 1px solid #e7eef6;
+            padding-top: 10px;
+            color: #735000;
+            font-size: 0.8rem;
+            line-height: 1.4;
+          }}
+          .tg-context-table {{
+            margin-top: 10px;
+          }}
+          @media (max-width: 1000px) {{
+            .tg-module-grid {{
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }}
+            .tg-kpi-grid {{
+              grid-template-columns: 1fr;
+            }}
+          }}
+          @media (max-width: 640px) {{
+            .tg-app-hero-inner {{
+              padding: 26px 22px;
+            }}
+            .tg-app-hero h1 {{
+              font-size: 1.75rem;
+            }}
+            .tg-module-grid {{
+              grid-template-columns: 1fr;
+            }}
+          }}
+        </style>
+        <section class="tg-app-hero" style='{background}'>
+          <div class="tg-app-hero-inner">
+            <div class="tg-eyebrow">{escape(tr(lang, "subtitle"))}</div>
+            <h1>ToxiGuard-VCC</h1>
+            <p>{escape(tr(lang, "positioning"))}</p>
+            <div class="tg-hero-pills">
+              <span>3.2.P Evidence Map</span>
+              <span>P.5.6 Rationale</span>
+              <span>DMF Bridge</span>
+              <span>Validation Gate</span>
+              <span>Response Memo</span>
+            </div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_sidebar(lang: str) -> dict[str, Any]:
@@ -589,24 +785,49 @@ def render_sidebar(lang: str) -> dict[str, Any]:
 
 
 def render_dashboard(lang: str, profile: dict[str, Any]) -> None:
-    st.subheader(tr(lang, "core_modules"))
-    st.write(tr(lang, "module_help"))
-    module_cols = st.columns(5)
-    for module, col in zip(MODULES, module_cols):
-        with col:
-            st.metric(f"{module['no']}. {module['title']}", module["status"])
-            st.caption(module["output"])
-            st.caption(f"Risk watch: {module['risk']}")
-
     readiness = score_evidence(st.session_state.evidence_df)
     high_risks = count_high_risks(st.session_state.evidence_df, st.session_state.spec_df, st.session_state.dmf_df)
     gate, gate_message = decision_gate(readiness, high_risks)
-    m1, m2, m3 = st.columns(3)
-    m1.metric(tr(lang, "readiness"), f"{readiness}%")
-    m2.metric(tr(lang, "open_risk"), high_risks)
-    m3.metric(tr(lang, "decision"), gate)
-    risk_badge(gate)
-    st.caption(gate_message)
+    kpi_markup = f"""
+    <div class="tg-kpi-grid">
+      <div class="tg-kpi-card">
+        <div class="tg-kpi-label">{escape(tr(lang, "readiness"))}</div>
+        <div class="tg-kpi-value">{readiness}%</div>
+        <div class="tg-kpi-note">P.1-P.8 source readiness</div>
+      </div>
+      <div class="tg-kpi-card">
+        <div class="tg-kpi-label">{escape(tr(lang, "open_risk"))}</div>
+        <div class="tg-kpi-value">{high_risks}</div>
+        <div class="tg-kpi-note">High-risk evidence items</div>
+      </div>
+      <div class="tg-kpi-card">
+        <div class="tg-kpi-label">{escape(tr(lang, "decision"))}</div>
+        <div class="tg-kpi-value">{escape(gate)}</div>
+        <div class="tg-kpi-note">{escape(gate_message)}</div>
+      </div>
+    </div>
+    """
+    st.markdown(kpi_markup, unsafe_allow_html=True)
+
+    cards = []
+    for module in MODULES:
+        cards.append(
+            f'<article class="tg-module-card">'
+            f'<div class="tg-module-top">'
+            f'<span class="tg-step">{escape(module["no"])}</span>'
+            f'<span class="tg-status-pill">Live</span>'
+            f'</div>'
+            f'<h3>{escape(module["title"])}</h3>'
+            f'<p>{escape(module["output"])}</p>'
+            f'<div class="tg-risk"><strong>Risk watch</strong><br>{escape(module["risk"])}</div>'
+            f'</article>'
+        )
+    st.markdown(
+        f'<div class="tg-section-title">{escape(tr(lang, "core_modules"))}</div>'
+        f'<div style="color:#4c5b70; margin-bottom: 14px;">{escape(tr(lang, "module_help"))}</div>'
+        f'<div class="tg-module-grid">{"".join(cards)}</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown("#### Decision context")
     st.dataframe(
