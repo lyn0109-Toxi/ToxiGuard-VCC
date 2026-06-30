@@ -13,6 +13,7 @@ import streamlit as st
 APP_DIR = Path(__file__).resolve().parent
 ASSET_DIR = APP_DIR / "assets"
 PLATFORM_IMAGE = ASSET_DIR / "platform-home.png"
+APP_BUILD = "consultant-intake-2026-06-29"
 
 
 TEXT: dict[str, dict[str, str]] = {
@@ -1602,6 +1603,7 @@ def render_sidebar(lang: str) -> dict[str, Any]:
     st.sidebar.divider()
     st.sidebar.caption("GitHub target")
     st.sidebar.code("lyn0109-Toxi/ToxiGuard-VCC", language=None)
+    st.sidebar.caption(f"Build: {APP_BUILD}")
     return {
         "product": product,
         "dosage": dosage,
