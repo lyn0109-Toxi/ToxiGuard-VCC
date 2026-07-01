@@ -7,42 +7,54 @@ import pandas as pd
 import streamlit as st
 
 
-APP_BUILD = "q3d-elemental-24-review-2026-06-30"
+APP_BUILD = "pde-limit-calculator-2026-06-30"
 
 
-ELEMENTAL_IMPURITY_ELEMENTS: list[dict[str, str]] = [
-    {"Element": "As", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
-    {"Element": "Cd", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
-    {"Element": "Hg", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
-    {"Element": "Pb", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
-    {"Element": "Co", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Naturally occurring or process-related risk; usually included in broad Q3D screening."},
-    {"Element": "Ni", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Catalyst, stainless steel, or excipient/source risk; usually included in broad Q3D screening."},
-    {"Element": "V", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Naturally occurring or catalyst/source risk; usually included in broad Q3D screening."},
-    {"Element": "Ag", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Au", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Ir", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Os", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Pd", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Pt", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Rh", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Ru", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Se", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Tl", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
-    {"Element": "Ba", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Cr", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Cu", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Li", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Mo", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Sb", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
-    {"Element": "Sn", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+ELEMENTAL_IMPURITY_ELEMENTS: list[dict[str, Any]] = [
+    {"Element": "As", "Class": "Class 1", "Scope": "Core 7", "Oral PDE (ug/day)": 15.0, "Parenteral PDE (ug/day)": 15.0, "Inhalation PDE (ug/day)": 2.0, "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Cd", "Class": "Class 1", "Scope": "Core 7", "Oral PDE (ug/day)": 5.0, "Parenteral PDE (ug/day)": 2.0, "Inhalation PDE (ug/day)": 3.0, "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Hg", "Class": "Class 1", "Scope": "Core 7", "Oral PDE (ug/day)": 30.0, "Parenteral PDE (ug/day)": 3.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Pb", "Class": "Class 1", "Scope": "Core 7", "Oral PDE (ug/day)": 5.0, "Parenteral PDE (ug/day)": 5.0, "Inhalation PDE (ug/day)": 5.0, "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Co", "Class": "Class 2A", "Scope": "Core 7", "Oral PDE (ug/day)": 50.0, "Parenteral PDE (ug/day)": 5.0, "Inhalation PDE (ug/day)": 3.0, "Risk question": "Naturally occurring or process-related risk; usually included in broad Q3D screening."},
+    {"Element": "Ni", "Class": "Class 2A", "Scope": "Core 7", "Oral PDE (ug/day)": 200.0, "Parenteral PDE (ug/day)": 20.0, "Inhalation PDE (ug/day)": 6.0, "Risk question": "Catalyst, stainless steel, or excipient/source risk; usually included in broad Q3D screening."},
+    {"Element": "V", "Class": "Class 2A", "Scope": "Core 7", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Naturally occurring or catalyst/source risk; usually included in broad Q3D screening."},
+    {"Element": "Ag", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 150.0, "Parenteral PDE (ug/day)": 15.0, "Inhalation PDE (ug/day)": 7.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Au", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 300.0, "Parenteral PDE (ug/day)": 300.0, "Inhalation PDE (ug/day)": 3.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ir", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Os", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Pd", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Pt", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Rh", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ru", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 100.0, "Parenteral PDE (ug/day)": 10.0, "Inhalation PDE (ug/day)": 1.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Se", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 150.0, "Parenteral PDE (ug/day)": 80.0, "Inhalation PDE (ug/day)": 130.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Tl", "Class": "Class 2B", "Scope": "Full 24", "Oral PDE (ug/day)": 8.0, "Parenteral PDE (ug/day)": 8.0, "Inhalation PDE (ug/day)": 8.0, "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ba", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 1400.0, "Parenteral PDE (ug/day)": 700.0, "Inhalation PDE (ug/day)": 300.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Cr", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 11000.0, "Parenteral PDE (ug/day)": 1100.0, "Inhalation PDE (ug/day)": 3.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Cu", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 3000.0, "Parenteral PDE (ug/day)": 300.0, "Inhalation PDE (ug/day)": 30.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Li", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 550.0, "Parenteral PDE (ug/day)": 250.0, "Inhalation PDE (ug/day)": 25.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Mo", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 3000.0, "Parenteral PDE (ug/day)": 1500.0, "Inhalation PDE (ug/day)": 10.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Sb", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 1200.0, "Parenteral PDE (ug/day)": 90.0, "Inhalation PDE (ug/day)": 20.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Sn", "Class": "Class 3", "Scope": "Full 24", "Oral PDE (ug/day)": 6000.0, "Parenteral PDE (ug/day)": 600.0, "Inhalation PDE (ug/day)": 60.0, "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
 ]
 
 
-def elemental_scope_frame(scope: str = "core7") -> pd.DataFrame:
+Q3D_ROUTE_COLUMNS = {
+    "Oral": "Oral PDE (ug/day)",
+    "Parenteral": "Parenteral PDE (ug/day)",
+    "Inhalation": "Inhalation PDE (ug/day)",
+}
+
+
+def _route_pde(item: dict[str, Any], route: str) -> float:
+    return float(item.get(Q3D_ROUTE_COLUMNS.get(route, "Oral PDE (ug/day)"), item["Oral PDE (ug/day)"]))
+
+
+def elemental_scope_frame(scope: str = "core7", route: str = "Oral") -> pd.DataFrame:
     full_scope = scope == "full24"
     rows: list[dict[str, Any]] = []
     for item in ELEMENTAL_IMPURITY_ELEMENTS:
         include = full_scope or item["Scope"] == "Core 7"
+        route_pde = _route_pde(item, route)
         rows.append(
             {
                 "Include": include,
@@ -50,8 +62,9 @@ def elemental_scope_frame(scope: str = "core7") -> pd.DataFrame:
                 "ICH Q3D class": item["Class"],
                 "Default scope": item["Scope"],
                 "Source / risk question": item["Risk question"],
-                "Route PDE entered (ug/day)": 0.0,
-                "Control target / J-value note": "Enter route-specific PDE and product MDD basis",
+                "Route": route,
+                "Route PDE entered (ug/day)": route_pde,
+                "Control target / J-value note": "Q3D Table A.2.1 default; edit if product-specific route/PDE justification applies",
                 "LOQ / target (%)": 10.0 if include else 0.0,
                 "Spike recovery (%)": 92.0 if include else 0.0,
                 "Precision RSD (%)": 12.0 if include else 0.0,
@@ -59,6 +72,96 @@ def elemental_scope_frame(scope: str = "core7") -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def pde_concentration_limits(pde_ug_day: float, daily_intake_g_day: float) -> dict[str, float | None]:
+    if pde_ug_day <= 0 or daily_intake_g_day <= 0:
+        return {
+            "permitted_conc_ug_g": None,
+            "control_threshold_ug_day": None,
+            "control_threshold_conc_ug_g": None,
+        }
+    permitted = pde_ug_day / daily_intake_g_day
+    control_ug_day = pde_ug_day * 0.30
+    return {
+        "permitted_conc_ug_g": permitted,
+        "control_threshold_ug_day": control_ug_day,
+        "control_threshold_conc_ug_g": control_ug_day / daily_intake_g_day,
+    }
+
+
+def apply_q3d_pde_limits(frame: pd.DataFrame, daily_intake_g_day: float) -> pd.DataFrame:
+    calculated = frame.copy()
+    pde = pd.to_numeric(calculated["Route PDE entered (ug/day)"], errors="coerce")
+    loq_pct = pd.to_numeric(calculated["LOQ / target (%)"], errors="coerce")
+    if daily_intake_g_day > 0:
+        calculated["Permitted concentration (ug/g)"] = pde / daily_intake_g_day
+        calculated["Control threshold 30% PDE (ug/day)"] = pde * 0.30
+        calculated["Control threshold concentration (ug/g)"] = (pde * 0.30) / daily_intake_g_day
+        calculated["Calculated LOQ vs control threshold (ug/g)"] = calculated["Control threshold concentration (ug/g)"] * loq_pct / 100
+    else:
+        calculated["Permitted concentration (ug/g)"] = None
+        calculated["Control threshold 30% PDE (ug/day)"] = None
+        calculated["Control threshold concentration (ug/g)"] = None
+        calculated["Calculated LOQ vs control threshold (ug/g)"] = None
+    return calculated
+
+
+def _tdi_percent(tdi_ug_day: float | None, mdd_mg_day: float) -> float | None:
+    if tdi_ug_day is None or tdi_ug_day <= 0 or mdd_mg_day <= 0:
+        return None
+    return tdi_ug_day / (mdd_mg_day * 10.0)
+
+
+def _lower_percent(percent_limit: float, tdi_ug_day: float | None, mdd_mg_day: float) -> tuple[float, str]:
+    tdi_pct = _tdi_percent(tdi_ug_day, mdd_mg_day)
+    if tdi_pct is None or percent_limit <= tdi_pct:
+        return percent_limit, f"{percent_limit:g}%"
+    return tdi_pct, f"{tdi_ug_day:g} ug/day TDI"
+
+
+def q3b_threshold_frame(mdd_mg_day: float, impurity_pde_ug_day: float, sample_conc_mg_ml: float) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+
+    reporting_pct = 0.1 if mdd_mg_day <= 1000 else 0.05
+    rows.append({"Threshold": "Reporting", "Limit (%)": reporting_pct, "Basis": "ICH Q3B(R2): <=1 g 0.1%; >1 g 0.05%", "Gate": "Info"})
+
+    if mdd_mg_day < 1:
+        identification_pct, identification_basis = _lower_percent(1.0, 5.0, mdd_mg_day)
+    elif mdd_mg_day <= 10:
+        identification_pct, identification_basis = _lower_percent(0.5, 20.0, mdd_mg_day)
+    elif mdd_mg_day <= 2000:
+        identification_pct, identification_basis = _lower_percent(0.2, 2000.0, mdd_mg_day)
+    else:
+        identification_pct, identification_basis = 0.10, "0.10%"
+    rows.append({"Threshold": "Identification", "Limit (%)": identification_pct, "Basis": f"ICH Q3B(R2): {identification_basis}", "Gate": "Info"})
+
+    if mdd_mg_day < 10:
+        qualification_pct, qualification_basis = _lower_percent(1.0, 50.0, mdd_mg_day)
+    elif mdd_mg_day <= 100:
+        qualification_pct, qualification_basis = _lower_percent(0.5, 200.0, mdd_mg_day)
+    elif mdd_mg_day <= 2000:
+        qualification_pct, qualification_basis = _lower_percent(0.2, 3000.0, mdd_mg_day)
+    else:
+        qualification_pct, qualification_basis = 0.15, "0.15%"
+    rows.append({"Threshold": "Qualification", "Limit (%)": qualification_pct, "Basis": f"ICH Q3B(R2): {qualification_basis}", "Gate": "Info"})
+
+    pde_pct = _tdi_percent(impurity_pde_ug_day, mdd_mg_day)
+    if pde_pct is not None:
+        rows.append({"Threshold": "Product-specific PDE/TDI", "Limit (%)": pde_pct, "Basis": f"Entered PDE/TDI {impurity_pde_ug_day:g} ug/day", "Gate": "Info"})
+        recommended_pct = min(qualification_pct, pde_pct)
+        recommended_basis = "Lower of ICH qualification threshold and entered product-specific PDE/TDI"
+    else:
+        recommended_pct = qualification_pct
+        recommended_basis = "ICH qualification threshold; product-specific PDE/TDI not entered"
+    rows.append({"Threshold": "Validation target", "Limit (%)": recommended_pct, "Basis": recommended_basis, "Gate": "Apply"})
+
+    frame = pd.DataFrame(rows)
+    if sample_conc_mg_ml > 0:
+        frame["Method concentration (ug/mL)"] = sample_conc_mg_ml * 1000.0 * pd.to_numeric(frame["Limit (%)"], errors="coerce") / 100.0
+    else:
+        frame["Method concentration (ug/mL)"] = None
+    return frame
 
 
 PROFILES: list[dict[str, Any]] = [
@@ -207,10 +310,11 @@ def _ensure_tables() -> dict[str, pd.DataFrame]:
 def _element_gate(row: pd.Series) -> str:
     if not bool(row.get("Include", False)):
         return "N/A"
+    pde = pd.to_numeric(row.get("Route PDE entered (ug/day)"), errors="coerce")
     loq_pct = pd.to_numeric(row.get("LOQ / target (%)"), errors="coerce")
     recovery = pd.to_numeric(row.get("Spike recovery (%)"), errors="coerce")
     rsd = pd.to_numeric(row.get("Precision RSD (%)"), errors="coerce")
-    if pd.isna(loq_pct) or pd.isna(recovery) or pd.isna(rsd):
+    if pd.isna(pde) or pde <= 0 or pd.isna(loq_pct) or pd.isna(recovery) or pd.isna(rsd):
         return "Review"
     if loq_pct > 30:
         return "Review"
@@ -332,8 +436,71 @@ def apply_validation_extension(app: Any) -> None:
             st.success(note) if "acceptable" in note else st.warning(note)
         return [f"{_label(profile, 'en')}: LOD {lod:.6f} {unit}", f"{_label(profile, 'en')}: LOQ {loq:.6f} {unit}", *notes]
 
+    def render_related_pde_panel() -> pd.DataFrame:
+        app.mini_heading("Related substance PDE/TDI limit / 유연물질 PDE 기준량", "impurity", "gold")
+        st.info(
+            "ICH Q3B(R2) applies reporting, identification, and qualification thresholds by maximum daily dose. "
+            "If a product-specific PDE/TDI or acceptable intake is lower, use that value to calculate the validation target."
+        )
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            mdd_mg_day = st.number_input(
+                "Maximum daily dose of drug substance (mg/day)",
+                min_value=0.000001,
+                value=50.0,
+                step=10.0,
+                format="%.6f",
+                key="related_mdd_mg_day",
+            )
+        with c2:
+            impurity_pde_ug_day = st.number_input(
+                "Product-specific impurity PDE/TDI (ug/day)",
+                min_value=0.0,
+                value=200.0,
+                step=10.0,
+                format="%.6f",
+                key="related_impurity_pde_ug_day",
+            )
+        with c3:
+            sample_conc_mg_ml = st.number_input(
+                "Main sample concentration at 100% (mg/mL)",
+                min_value=0.000001,
+                value=0.5,
+                step=0.1,
+                format="%.6f",
+                key="related_sample_conc_mg_ml",
+            )
+
+        frame = q3b_threshold_frame(mdd_mg_day, impurity_pde_ug_day, sample_conc_mg_ml)
+        target = frame[frame["Threshold"] == "Validation target"].iloc[0]
+        metrics = st.columns(4)
+        metrics[0].metric("Validation target", f"{float(target['Limit (%)']):.4f}%")
+        metrics[1].metric("Target concentration", f"{float(target['Method concentration (ug/mL)']):.4f} ug/mL")
+        metrics[2].metric("MDD", f"{mdd_mg_day:.4g} mg/day")
+        metrics[3].metric("PDE/TDI", f"{impurity_pde_ug_day:.4g} ug/day" if impurity_pde_ug_day > 0 else "Not entered")
+        st.dataframe(frame, width="stretch", hide_index=True)
+        st.session_state.related_pde_frame = frame
+        if st.button("Apply calculated 기준농도 to sample prep", key="apply_related_pde_ref", use_container_width=True):
+            st.session_state["ext_prep_related_substances_ref"] = float(target["Method concentration (ug/mL)"])
+            st.session_state["ext_prep_related_substances_unit"] = "ug/mL"
+            st.session_state["ext_prep_related_substances_level"] = 100.0
+            st.rerun()
+        return frame
+
     def render_elemental_scope_panel() -> None:
         app.mini_heading("ICH Q3D elemental impurity scope / 금속불순물 24종 범위", "atom", "green")
+        c_route, c_mdd = st.columns(2)
+        with c_route:
+            route = st.selectbox("Route of administration / 투여경로", ["Oral", "Parenteral", "Inhalation"], key="q3d_route")
+        with c_mdd:
+            daily_intake_g_day = st.number_input(
+                "Maximum daily product intake (g/day)",
+                min_value=0.000001,
+                value=2.5,
+                step=0.5,
+                format="%.6f",
+                key="q3d_daily_intake_g_day",
+            )
         mode = st.radio(
             "Q3D scope mode",
             ["Core 7: Class 1 + Class 2A", "Full Q3D 24 elements"],
@@ -342,11 +509,13 @@ def apply_validation_extension(app: Any) -> None:
         )
         scope_key = "full24" if mode.startswith("Full") else "core7"
         previous_scope = st.session_state.get("q3d_scope_key")
-        if previous_scope != scope_key or "q3d_element_df" not in st.session_state:
+        previous_route = st.session_state.get("q3d_scope_route")
+        if previous_scope != scope_key or previous_route != route or "q3d_element_df" not in st.session_state:
             st.session_state.q3d_scope_key = scope_key
-            st.session_state.q3d_element_df = elemental_scope_frame(scope_key)
+            st.session_state.q3d_scope_route = route
+            st.session_state.q3d_element_df = elemental_scope_frame(scope_key, route)
 
-        element_df = st.session_state.q3d_element_df.copy()
+        element_df = apply_q3d_pde_limits(st.session_state.q3d_element_df.copy(), daily_intake_g_day)
         element_df["Gate"] = element_df.apply(_element_gate, axis=1)
         included = element_df[element_df["Include"]]
         class_counts = included["ICH Q3D class"].value_counts().to_dict()
@@ -358,10 +527,20 @@ def apply_validation_extension(app: Any) -> None:
 
         st.info(
             "Q3D practical read: Core 7 covers Class 1 (As, Cd, Hg, Pb) plus Class 2A "
-            "(Co, Ni, V). Full Q3D screening expands to all 24 elements including Class 2B and Class 3."
+            "(Co, Ni, V). Full Q3D screening expands to all 24 elements including Class 2B and Class 3. "
+            "Permitted concentration is calculated as PDE (ug/day) / maximum daily product intake (g/day)."
         )
         edited_elements = st.data_editor(
-            element_df.drop(columns=["Gate"], errors="ignore"),
+            element_df.drop(
+                columns=[
+                    "Gate",
+                    "Permitted concentration (ug/g)",
+                    "Control threshold 30% PDE (ug/day)",
+                    "Control threshold concentration (ug/g)",
+                    "Calculated LOQ vs control threshold (ug/g)",
+                ],
+                errors="ignore",
+            ),
             width="stretch",
             num_rows="fixed",
             key="q3d_element_editor",
@@ -377,8 +556,18 @@ def apply_validation_extension(app: Any) -> None:
             },
         )
         edited_elements = edited_elements.copy()
+        edited_elements = apply_q3d_pde_limits(edited_elements, daily_intake_g_day)
         edited_elements["Gate"] = edited_elements.apply(_element_gate, axis=1)
-        st.session_state.q3d_element_df = edited_elements.drop(columns=["Gate"], errors="ignore")
+        st.session_state.q3d_element_df = edited_elements.drop(
+            columns=[
+                "Gate",
+                "Permitted concentration (ug/g)",
+                "Control threshold 30% PDE (ug/day)",
+                "Control threshold concentration (ug/g)",
+                "Calculated LOQ vs control threshold (ug/g)",
+            ],
+            errors="ignore",
+        )
 
         active = edited_elements[edited_elements["Include"]]
         st.dataframe(
@@ -387,7 +576,11 @@ def apply_validation_extension(app: Any) -> None:
                     "Element",
                     "ICH Q3D class",
                     "Default scope",
+                    "Route PDE entered (ug/day)",
+                    "Permitted concentration (ug/g)",
+                    "Control threshold concentration (ug/g)",
                     "LOQ / target (%)",
+                    "Calculated LOQ vs control threshold (ug/g)",
                     "Spike recovery (%)",
                     "Precision RSD (%)",
                     "Gate",
@@ -404,10 +597,18 @@ def apply_validation_extension(app: Any) -> None:
 
     def q3d_scope_report_frame() -> pd.DataFrame:
         if "q3d_element_df" not in st.session_state:
-            return elemental_scope_frame("core7")
-        frame = st.session_state.q3d_element_df.copy()
+            frame = elemental_scope_frame("core7")
+        else:
+            frame = st.session_state.q3d_element_df.copy()
+        daily_intake_g_day = float(st.session_state.get("q3d_daily_intake_g_day", 2.5))
+        frame = apply_q3d_pde_limits(frame, daily_intake_g_day)
         frame["Gate"] = frame.apply(_element_gate, axis=1)
         return frame[frame["Include"]].copy()
+
+    def related_pde_report_frame() -> pd.DataFrame:
+        if "related_pde_frame" in st.session_state:
+            return st.session_state.related_pde_frame.copy()
+        return q3b_threshold_frame(50.0, 200.0, 0.5)
 
     def render_validation(lang: str) -> None:
         app.section_header(app.tr(lang, "validation"), app.tr(lang, "calc_help"), "calculator", "orange")
@@ -445,6 +646,8 @@ def apply_validation_extension(app: Any) -> None:
 
         profile = _profile(str(st.session_state.get("validation_test_item", "assay")))
         st.markdown(f'<div class="vcc-basis" style="--tone:{profile["tone"]}"><strong>{escape(_label(profile, lang))} review basis</strong><br><b>Regulatory basis:</b> {escape(profile["basis"])}<br><b>CTD location:</b> {escape(profile["ctd"])}<br><b>ICH M14 note:</b> {escape(profile["m14"])}</div>', unsafe_allow_html=True)
+        if profile["key"] == "related_substances":
+            render_related_pde_panel()
         if profile["key"] == "elemental_impurities":
             render_elemental_scope_panel()
         app.mini_heading(app.tr(lang, "sample_prep"), "calculator", "orange")
@@ -485,11 +688,22 @@ def apply_validation_extension(app: Any) -> None:
                 {
                     "Question": f"Please provide ICH Q3D source risk assessment, PDE/MDD basis, and ICP validation raw data for {row['Element']}.",
                     "Triggered by": f"Q3D elemental impurity gate: {row['Gate']} / {row['ICH Q3D class']}",
-                    "Evidence needed": f"LOQ/target {row['LOQ / target (%)']}%, recovery {row['Spike recovery (%)']}%, precision RSD {row['Precision RSD (%)']}%",
+                    "Evidence needed": f"PDE {row['Route PDE entered (ug/day)']} ug/day, permitted concentration {row['Permitted concentration (ug/g)']} ug/g, LOQ/target {row['LOQ / target (%)']}%, recovery {row['Spike recovery (%)']}%, precision RSD {row['Precision RSD (%)']}%",
                     "CTD update": "3.2.P.5.3 / 3.2.P.5.5 / 3.2.P.5.6",
                     "Owner": "Analytical / Toxicology / CMC RA",
                 }
             )
+        related_frame = related_pde_report_frame()
+        target = related_frame[related_frame["Threshold"] == "Validation target"].iloc[0]
+        additions.append(
+            {
+                "Question": "Please confirm the related-substance PDE/TDI or ICH Q3B threshold basis used for the validation reference concentration.",
+                "Triggered by": f"Related substance validation target {target['Limit (%)']:.4f}% / {target['Method concentration (ug/mL)']:.4f} ug/mL",
+                "Evidence needed": str(target["Basis"]),
+                "CTD update": "3.2.P.5.5 / 3.2.P.5.6",
+                "Owner": "Analytical / Toxicology / CMC RA",
+            }
+        )
         return pd.concat([rows, pd.DataFrame(additions)], ignore_index=True) if additions else rows
 
     def build_decision_packet(profile: dict[str, Any]) -> str:
@@ -497,12 +711,30 @@ def apply_validation_extension(app: Any) -> None:
         summary = app.markdown_table(summary_frame(), ["Test item", "Gate", "Review items", "Regulatory basis", "CTD update"])
         reviews = review_frame(include_gate=True)
         review_md = app.markdown_table(reviews[reviews["Gate"] == "Review"], ["Test item", "Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note", "CTD update"])
+        related_pde = related_pde_report_frame()
+        related_pde_md = app.markdown_table(
+            related_pde,
+            ["Threshold", "Limit (%)", "Method concentration (ug/mL)", "Basis", "Gate"],
+        )
         q3d_scope = q3d_scope_report_frame()
         q3d_scope_md = app.markdown_table(
             q3d_scope,
-            ["Element", "ICH Q3D class", "Default scope", "LOQ / target (%)", "Spike recovery (%)", "Precision RSD (%)", "Gate", "Note"],
+            [
+                "Element",
+                "ICH Q3D class",
+                "Default scope",
+                "Route PDE entered (ug/day)",
+                "Permitted concentration (ug/g)",
+                "Control threshold concentration (ug/g)",
+                "LOQ / target (%)",
+                "Calculated LOQ vs control threshold (ug/g)",
+                "Spike recovery (%)",
+                "Precision RSD (%)",
+                "Gate",
+                "Note",
+            ],
         )
-        extra = f"## Test-Specific Validation Summary\n\n{summary}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
+        extra = f"## Test-Specific Validation Summary\n\n{summary}\n### Related Substance PDE/TDI Basis\n\n{related_pde_md}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
         return packet.replace("## Response Memo Seed", extra + "\n## Response Memo Seed")
 
     app.initialize_state = initialize_state
