@@ -7,7 +7,58 @@ import pandas as pd
 import streamlit as st
 
 
-APP_BUILD = "validation-item-review-2026-06-30"
+APP_BUILD = "q3d-elemental-24-review-2026-06-30"
+
+
+ELEMENTAL_IMPURITY_ELEMENTS: list[dict[str, str]] = [
+    {"Element": "As", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Cd", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Hg", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Pb", "Class": "Class 1", "Scope": "Core 7", "Risk question": "Toxic element; evaluate all potential API, excipient, equipment, water, and container sources."},
+    {"Element": "Co", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Naturally occurring or process-related risk; usually included in broad Q3D screening."},
+    {"Element": "Ni", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Catalyst, stainless steel, or excipient/source risk; usually included in broad Q3D screening."},
+    {"Element": "V", "Class": "Class 2A", "Scope": "Core 7", "Risk question": "Naturally occurring or catalyst/source risk; usually included in broad Q3D screening."},
+    {"Element": "Ag", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Au", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ir", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Os", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Pd", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Pt", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Rh", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ru", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Se", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Tl", "Class": "Class 2B", "Scope": "Full 24", "Risk question": "Assess if intentionally added, catalyst-related, or source-specific risk is present."},
+    {"Element": "Ba", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Cr", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Cu", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Li", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Mo", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Sb", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+    {"Element": "Sn", "Class": "Class 3", "Scope": "Full 24", "Risk question": "Lower oral toxicity class; evaluate route and formulation/source-specific risk."},
+]
+
+
+def elemental_scope_frame(scope: str = "core7") -> pd.DataFrame:
+    full_scope = scope == "full24"
+    rows: list[dict[str, Any]] = []
+    for item in ELEMENTAL_IMPURITY_ELEMENTS:
+        include = full_scope or item["Scope"] == "Core 7"
+        rows.append(
+            {
+                "Include": include,
+                "Element": item["Element"],
+                "ICH Q3D class": item["Class"],
+                "Default scope": item["Scope"],
+                "Source / risk question": item["Risk question"],
+                "Route PDE entered (ug/day)": 0.0,
+                "Control target / J-value note": "Enter route-specific PDE and product MDD basis",
+                "LOQ / target (%)": 10.0 if include else 0.0,
+                "Spike recovery (%)": 92.0 if include else 0.0,
+                "Precision RSD (%)": 12.0 if include else 0.0,
+                "Note": "Q3D risk assessment + method validation raw data required" if include else "Add if product/source risk applies",
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 PROFILES: list[dict[str, Any]] = [
@@ -153,6 +204,23 @@ def _ensure_tables() -> dict[str, pd.DataFrame]:
     return st.session_state.validation_ext_tables
 
 
+def _element_gate(row: pd.Series) -> str:
+    if not bool(row.get("Include", False)):
+        return "N/A"
+    loq_pct = pd.to_numeric(row.get("LOQ / target (%)"), errors="coerce")
+    recovery = pd.to_numeric(row.get("Spike recovery (%)"), errors="coerce")
+    rsd = pd.to_numeric(row.get("Precision RSD (%)"), errors="coerce")
+    if pd.isna(loq_pct) or pd.isna(recovery) or pd.isna(rsd):
+        return "Review"
+    if loq_pct > 30:
+        return "Review"
+    if recovery < 70 or recovery > 150:
+        return "Review"
+    if rsd > 20:
+        return "Review"
+    return "Pass"
+
+
 def _svg(body: str) -> str:
     return f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">{body}</svg>'
 
@@ -264,6 +332,83 @@ def apply_validation_extension(app: Any) -> None:
             st.success(note) if "acceptable" in note else st.warning(note)
         return [f"{_label(profile, 'en')}: LOD {lod:.6f} {unit}", f"{_label(profile, 'en')}: LOQ {loq:.6f} {unit}", *notes]
 
+    def render_elemental_scope_panel() -> None:
+        app.mini_heading("ICH Q3D elemental impurity scope / 금속불순물 24종 범위", "atom", "green")
+        mode = st.radio(
+            "Q3D scope mode",
+            ["Core 7: Class 1 + Class 2A", "Full Q3D 24 elements"],
+            horizontal=True,
+            key="q3d_scope_mode",
+        )
+        scope_key = "full24" if mode.startswith("Full") else "core7"
+        previous_scope = st.session_state.get("q3d_scope_key")
+        if previous_scope != scope_key or "q3d_element_df" not in st.session_state:
+            st.session_state.q3d_scope_key = scope_key
+            st.session_state.q3d_element_df = elemental_scope_frame(scope_key)
+
+        element_df = st.session_state.q3d_element_df.copy()
+        element_df["Gate"] = element_df.apply(_element_gate, axis=1)
+        included = element_df[element_df["Include"]]
+        class_counts = included["ICH Q3D class"].value_counts().to_dict()
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Included elements", f"{len(included)} / 24")
+        c2.metric("Class 1", str(class_counts.get("Class 1", 0)))
+        c3.metric("Class 2A", str(class_counts.get("Class 2A", 0)))
+        c4.metric("Gate review", str(int((included["Gate"] == "Review").sum())))
+
+        st.info(
+            "Q3D practical read: Core 7 covers Class 1 (As, Cd, Hg, Pb) plus Class 2A "
+            "(Co, Ni, V). Full Q3D screening expands to all 24 elements including Class 2B and Class 3."
+        )
+        edited_elements = st.data_editor(
+            element_df.drop(columns=["Gate"], errors="ignore"),
+            width="stretch",
+            num_rows="fixed",
+            key="q3d_element_editor",
+            column_config={
+                "Include": st.column_config.CheckboxColumn("Include", help="Include this element in the validation scope"),
+                "ICH Q3D class": st.column_config.SelectboxColumn(
+                    "ICH Q3D class", options=["Class 1", "Class 2A", "Class 2B", "Class 3"], required=True
+                ),
+                "Route PDE entered (ug/day)": st.column_config.NumberColumn("Route PDE entered (ug/day)", min_value=0.0, step=1.0),
+                "LOQ / target (%)": st.column_config.NumberColumn("LOQ / target (%)", min_value=0.0, step=1.0),
+                "Spike recovery (%)": st.column_config.NumberColumn("Spike recovery (%)", min_value=0.0, step=1.0),
+                "Precision RSD (%)": st.column_config.NumberColumn("Precision RSD (%)", min_value=0.0, step=1.0),
+            },
+        )
+        edited_elements = edited_elements.copy()
+        edited_elements["Gate"] = edited_elements.apply(_element_gate, axis=1)
+        st.session_state.q3d_element_df = edited_elements.drop(columns=["Gate"], errors="ignore")
+
+        active = edited_elements[edited_elements["Include"]]
+        st.dataframe(
+            active[
+                [
+                    "Element",
+                    "ICH Q3D class",
+                    "Default scope",
+                    "LOQ / target (%)",
+                    "Spike recovery (%)",
+                    "Precision RSD (%)",
+                    "Gate",
+                    "Note",
+                ]
+            ],
+            width="stretch",
+            hide_index=True,
+        )
+        if scope_key == "core7" and len(active) < 7:
+            st.warning("Core 7 mode should normally retain As, Cd, Hg, Pb, Co, Ni, and V unless a documented product risk rationale excludes an element.")
+        if scope_key == "full24" and len(active) < 24:
+            st.warning("Full Q3D 24 mode is selected, but not all 24 elements are included. Confirm the exclusion rationale.")
+
+    def q3d_scope_report_frame() -> pd.DataFrame:
+        if "q3d_element_df" not in st.session_state:
+            return elemental_scope_frame("core7")
+        frame = st.session_state.q3d_element_df.copy()
+        frame["Gate"] = frame.apply(_element_gate, axis=1)
+        return frame[frame["Include"]].copy()
+
     def render_validation(lang: str) -> None:
         app.section_header(app.tr(lang, "validation"), app.tr(lang, "calc_help"), "calculator", "orange")
         st.markdown(
@@ -300,6 +445,8 @@ def apply_validation_extension(app: Any) -> None:
 
         profile = _profile(str(st.session_state.get("validation_test_item", "assay")))
         st.markdown(f'<div class="vcc-basis" style="--tone:{profile["tone"]}"><strong>{escape(_label(profile, lang))} review basis</strong><br><b>Regulatory basis:</b> {escape(profile["basis"])}<br><b>CTD location:</b> {escape(profile["ctd"])}<br><b>ICH M14 note:</b> {escape(profile["m14"])}</div>', unsafe_allow_html=True)
+        if profile["key"] == "elemental_impurities":
+            render_elemental_scope_panel()
         app.mini_heading(app.tr(lang, "sample_prep"), "calculator", "orange")
         calc = concentration_review(profile)
         notes = lod_review(float(calc["reference_conc"]), str(calc["unit"]), profile)
@@ -332,6 +479,17 @@ def apply_validation_extension(app: Any) -> None:
                     "Owner": "Analytical / CMC RA",
                 }
             )
+        q3d_reviews = q3d_scope_report_frame()
+        for _, row in q3d_reviews[q3d_reviews["Gate"] == "Review"].head(10).iterrows():
+            additions.append(
+                {
+                    "Question": f"Please provide ICH Q3D source risk assessment, PDE/MDD basis, and ICP validation raw data for {row['Element']}.",
+                    "Triggered by": f"Q3D elemental impurity gate: {row['Gate']} / {row['ICH Q3D class']}",
+                    "Evidence needed": f"LOQ/target {row['LOQ / target (%)']}%, recovery {row['Spike recovery (%)']}%, precision RSD {row['Precision RSD (%)']}%",
+                    "CTD update": "3.2.P.5.3 / 3.2.P.5.5 / 3.2.P.5.6",
+                    "Owner": "Analytical / Toxicology / CMC RA",
+                }
+            )
         return pd.concat([rows, pd.DataFrame(additions)], ignore_index=True) if additions else rows
 
     def build_decision_packet(profile: dict[str, Any]) -> str:
@@ -339,7 +497,12 @@ def apply_validation_extension(app: Any) -> None:
         summary = app.markdown_table(summary_frame(), ["Test item", "Gate", "Review items", "Regulatory basis", "CTD update"])
         reviews = review_frame(include_gate=True)
         review_md = app.markdown_table(reviews[reviews["Gate"] == "Review"], ["Test item", "Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note", "CTD update"])
-        extra = f"## Test-Specific Validation Summary\n\n{summary}\n### Validation Items Needing Review\n\n{review_md}\n"
+        q3d_scope = q3d_scope_report_frame()
+        q3d_scope_md = app.markdown_table(
+            q3d_scope,
+            ["Element", "ICH Q3D class", "Default scope", "LOQ / target (%)", "Spike recovery (%)", "Precision RSD (%)", "Gate", "Note"],
+        )
+        extra = f"## Test-Specific Validation Summary\n\n{summary}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
         return packet.replace("## Response Memo Seed", extra + "\n## Response Memo Seed")
 
     app.initialize_state = initialize_state
