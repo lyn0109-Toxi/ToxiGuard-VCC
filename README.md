@@ -51,7 +51,7 @@ Document received -> Source text / confirmed value -> Key CMC decision point -> 
 - Test-specific validation result gate tables and overall review summary
 - ICH M14 safety-evidence note separated from analytical validation bases such as ICH Q2(R2), Q14, Q3D(R2), and M7(R2)
 - CMC RA Decision Packet preview with product profile, document application logic, key decision points, DMF/CTD source input snapshots, Client CTD Intake Snapshot, and Markdown download
-- App launcher for SOP Gate, CTI, and Revenue modules
+- App launcher for SOP Gate, CTI, Revenue, and ToxiGuard-MediLens medication safety modules
 
 ## Run Locally
 

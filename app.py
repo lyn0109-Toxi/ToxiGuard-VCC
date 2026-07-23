@@ -4678,6 +4678,7 @@ def render_launcher(lang: str) -> None:
         ("ToxiGuard-SOP Gate", "Calculation / Validation Review" if lang == "en" else "계산 / 밸리데이션 검토", "calculator", "orange"),
         ("Clinical Trial Intelligence", "Clinical evidence layer" if lang == "en" else "임상 근거 레이어", "trend", "teal"),
         ("Revenue Forecast Intelligence", "Business evidence layer" if lang == "en" else "비즈니스 근거 레이어", "gauge", "green"),
+        ("ToxiGuard-MediLens", "Medication label safety evidence layer" if lang == "en" else "의약품 라벨 기반 복약 안전성 근거 레이어", "shield", "blue"),
     ]
     st.markdown(
         '<div class="tg-launcher-grid">'
@@ -4708,6 +4709,11 @@ def render_launcher(lang: str) -> None:
                 "App": "Revenue Forecast Intelligence",
                 "Role": "Business evidence layer",
                 "Run": "python3 -m streamlit run ../ToxiGuard-Revenue-Forecast/app.py --server.port 8511",
+            },
+            {
+                "App": "ToxiGuard-MediLens",
+                "Role": "Medication label, side-effect, food, and condition guidance",
+                "Run": "https://github.com/lyn0109-Toxi/ToxiGuard-MediLens",
             },
         ]
     )

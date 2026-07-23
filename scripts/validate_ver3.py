@@ -92,7 +92,7 @@ def main() -> None:
         "dmf": ["03 DMF-완제 연결성"],
         "validation": ["04 계산 / 밸리데이션", "시험항목별 밸리데이션 선택"],
         "response": ["05 RA 답변 메모", "CMC RA Decision Packet 미리보기", "Markdown 미리보기"],
-        "launcher": ["앱 실행", "Clinical Trial Intelligence", "ToxiGuard-SOP Gate"],
+        "launcher": ["앱 실행", "Clinical Trial Intelligence", "ToxiGuard-SOP Gate", "ToxiGuard-MediLens"],
     }
     for page_key, expected in page_checks.items():
         run_page(page_key, expected)
