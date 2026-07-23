@@ -9,7 +9,23 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app import calculate_sample_prep, evaluate_lod_linearity, evaluate_rule, format_report_diff, format_report_number
+from app import (
+    calculate_sample_prep,
+    default_validation_item_tables,
+    evaluate_lod_linearity,
+    evaluate_rule,
+    format_report_diff,
+    format_report_number,
+)
+from validation_extension import (
+    ELEMENTAL_IMPURITY_ELEMENTS,
+    apply_q3d_pde_limits,
+    elemental_scope_frame,
+    evaluate_q14_problem,
+    pde_concentration_limits,
+    q3b_threshold_frame,
+    q14_problem_frame,
+)
 
 
 def approx(actual: float, expected: float, tolerance: float = 1e-6) -> None:
@@ -158,6 +174,112 @@ def validate_result_gates() -> None:
             raise AssertionError(f"Expected {expected}, got {actual} for {row}")
 
 
+def validate_test_specific_validation_tables() -> None:
+    tables = default_validation_item_tables()
+    expected_keys = {"assay", "related_substances", "dissolution", "elemental_impurities", "nitrosamines"}
+    if set(tables) != expected_keys:
+        raise AssertionError(f"Unexpected validation item keys: {set(tables)}")
+    for key, table in tables.items():
+        required_columns = {"Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note"}
+        missing = required_columns.difference(table.columns)
+        if missing:
+            raise AssertionError(f"{key} table is missing columns: {missing}")
+        if len(table) < 5:
+            raise AssertionError(f"{key} table should contain enough test-specific review rows")
+
+    nitrosamines = tables["nitrosamines"]
+    if not any(nitrosamines["Item"].astype(str).str.contains("acceptable intake")):
+        raise AssertionError("Nitrosamine table should connect LOQ to acceptable intake")
+
+    metals = tables["elemental_impurities"]
+    if not any(metals["Item"].astype(str).str.contains("control threshold")):
+        raise AssertionError("Elemental impurity table should connect LOQ to control threshold")
+
+
+def validate_q3d_elemental_scope() -> None:
+    if len(ELEMENTAL_IMPURITY_ELEMENTS) != 24:
+        raise AssertionError(f"Expected 24 Q3D elements, got {len(ELEMENTAL_IMPURITY_ELEMENTS)}")
+    elements = {row["Element"] for row in ELEMENTAL_IMPURITY_ELEMENTS}
+    expected = {
+        "As", "Cd", "Hg", "Pb", "Co", "Ni", "V",
+        "Ag", "Au", "Ir", "Os", "Pd", "Pt", "Rh", "Ru", "Se", "Tl",
+        "Ba", "Cr", "Cu", "Li", "Mo", "Sb", "Sn",
+    }
+    if elements != expected:
+        raise AssertionError(f"Unexpected Q3D element set: {sorted(elements)}")
+
+    core = elemental_scope_frame("core7")
+    core_included = set(core[core["Include"]]["Element"])
+    if core_included != {"As", "Cd", "Hg", "Pb", "Co", "Ni", "V"}:
+        raise AssertionError(f"Unexpected Core 7 elements: {sorted(core_included)}")
+
+    full = elemental_scope_frame("full24")
+    if int(full["Include"].sum()) != 24:
+        raise AssertionError("Full Q3D 24 mode should include all 24 elements")
+
+    oral_core = apply_q3d_pde_limits(elemental_scope_frame("core7", "Oral"), 2.5)
+    as_row = oral_core[oral_core["Element"] == "As"].iloc[0]
+    approx(float(as_row["Route PDE entered (ug/day)"]), 15.0)
+    approx(float(as_row["Permitted concentration (ug/g)"]), 6.0)
+    approx(float(as_row["Control threshold concentration (ug/g)"]), 1.8)
+    approx(float(as_row["Calculated LOQ vs control threshold (ug/g)"]), 0.18)
+
+    parenteral_core = elemental_scope_frame("core7", "Parenteral")
+    cd_row = parenteral_core[parenteral_core["Element"] == "Cd"].iloc[0]
+    approx(float(cd_row["Route PDE entered (ug/day)"]), 2.0)
+
+
+def validate_pde_limit_calculations() -> None:
+    limits = pde_concentration_limits(15.0, 2.5)
+    approx(float(limits["permitted_conc_ug_g"]), 6.0)
+    approx(float(limits["control_threshold_ug_day"]), 4.5)
+    approx(float(limits["control_threshold_conc_ug_g"]), 1.8)
+
+    q3b = q3b_threshold_frame(mdd_mg_day=50.0, impurity_pde_ug_day=200.0, sample_conc_mg_ml=0.5)
+    qualification = q3b[q3b["Threshold"] == "Qualification"].iloc[0]
+    target = q3b[q3b["Threshold"] == "Validation target"].iloc[0]
+    approx(float(qualification["Limit (%)"]), 0.4)
+    approx(float(target["Limit (%)"]), 0.4)
+    approx(float(target["Method concentration (ug/mL)"]), 2.0)
+
+    high_mdd = q3b_threshold_frame(mdd_mg_day=1900.0, impurity_pde_ug_day=1000.0, sample_conc_mg_ml=1.0)
+    target_high_mdd = high_mdd[high_mdd["Threshold"] == "Validation target"].iloc[0]
+    approx(float(target_high_mdd["Limit (%)"]), 1000.0 / (1900.0 * 10.0))
+    approx(float(target_high_mdd["Method concentration (ug/mL)"]), 1000.0 * (1000.0 / (1900.0 * 10.0)) / 100.0)
+
+
+def validate_q14_method_setup_check() -> None:
+    frame = q14_problem_frame("Assay / 함량")
+    required_columns = {
+        "Test item",
+        "Q14 check",
+        "Status",
+        "Risk",
+        "Problem signal",
+        "Evidence to request",
+        "CTD update",
+        "Q14 anchor",
+    }
+    missing = required_columns.difference(frame.columns)
+    if missing:
+        raise AssertionError(f"Q14 problem frame is missing columns: {missing}")
+    if len(frame) < 8:
+        raise AssertionError("Q14 problem frame should contain the core analytical procedure development checks")
+    joined = " | ".join(frame["Q14 check"].astype(str))
+    for expected in ["ATP", "Robustness", "control strategy", "lifecycle"]:
+        if expected.lower() not in joined.lower():
+            raise AssertionError(f"Q14 problem frame should include {expected!r}")
+
+    gated = frame.copy()
+    gated["Gate"] = gated.apply(evaluate_q14_problem, axis=1)
+    if int((gated["Gate"] == "Review").sum()) < 1:
+        raise AssertionError("Default Q14 frame should surface method setup review items")
+    if evaluate_q14_problem(pd.Series({"Status": "Defined", "Risk": "High"})) != "Pass":
+        raise AssertionError("Defined Q14 item should pass even when the inherent topic risk is high")
+    if evaluate_q14_problem(pd.Series({"Status": "Gap", "Risk": "Low"})) != "Review":
+        raise AssertionError("Gap status should trigger Q14 review")
+
+
 def validate_report_formatting() -> None:
     assert format_report_number(None) == "N/A"
     assert format_report_number("Not run") == "Not run"
@@ -171,6 +293,10 @@ def main() -> None:
     validate_sample_preparation()
     validate_lod_linearity()
     validate_result_gates()
+    validate_test_specific_validation_tables()
+    validate_q3d_elemental_scope()
+    validate_pde_limit_calculations()
+    validate_q14_method_setup_check()
     validate_report_formatting()
     print("ToxiGuard calculation validation passed")
 

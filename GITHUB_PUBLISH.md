@@ -22,7 +22,7 @@ gh: command not found
 2. Connect this local folder to the repository:
 
 ```bash
-cd /Users/leeyoung-nam/Desktop/ToxiGuard/ToxiGuard-Platform-Ver3
+cd /Users/leeyoung-nam/Desktop/ToxiGuard/Github/ToxiGuard-Platform-Ver3
 git remote set-url origin https://github.com/lyn0109-Toxi/ToxiGuard-VCC.git
 git branch -M main
 git push -u origin main
@@ -46,6 +46,6 @@ Required files for Streamlit Cloud are included:
 ## Local Validation
 
 ```bash
-cd /Users/leeyoung-nam/Desktop/ToxiGuard/ToxiGuard-Platform-Ver3
+cd /Users/leeyoung-nam/Desktop/ToxiGuard/Github/ToxiGuard-Platform-Ver3
 python3 scripts/validate_ver3.py
 ```

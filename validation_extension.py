@@ -7,7 +7,95 @@ import pandas as pd
 import streamlit as st
 
 
-APP_BUILD = "pde-limit-calculator-2026-06-30"
+APP_BUILD = "q14-method-risk-check-2026-07-01"
+
+
+Q14_STATUS_OPTIONS = ["Defined", "Partial", "Gap", "N/A"]
+
+
+Q14_ANALYTICAL_PROCEDURE_CHECKS: list[dict[str, str]] = [
+    {
+        "Q14 check": "ATP and intended purpose",
+        "Status": "Partial",
+        "Risk": "High",
+        "Problem signal": "The method has validation results, but the measurement objective, CQA, reportable result, range, and decision use are not written as an ATP.",
+        "Evidence to request": "Analytical target profile or equivalent rationale linking CQA, intended purpose, performance criteria, and reportable range.",
+        "CTD update": "3.2.P.5.2 / 3.2.P.5.3 / 3.2.P.5.6",
+        "Q14 anchor": "ATP drives technology choice and validation performance criteria.",
+    },
+    {
+        "Q14 check": "Attribute and matrix definition",
+        "Status": "Partial",
+        "Risk": "High",
+        "Problem signal": "API, placebo, excipient, degradation product, dissolution medium, digestion matrix, or trace-level matrix effect is not explicitly covered.",
+        "Evidence to request": "Matrix map, specificity/selectivity design, forced degradation or interference justification, and representative sample set.",
+        "CTD update": "3.2.P.5.2 / 3.2.P.5.3",
+        "Q14 anchor": "Procedure should measure the intended attribute with needed specificity/selectivity.",
+    },
+    {
+        "Q14 check": "Technology and apparatus selection",
+        "Status": "Partial",
+        "Risk": "Medium",
+        "Problem signal": "HPLC/UPLC/ICP/LC-MS/GC-MS/dissolution apparatus was chosen without explaining why it is fit for the product and operating environment.",
+        "Evidence to request": "Technology selection rationale, detector sensitivity rationale, apparatus/column/source selection basis, and operating environment assumptions.",
+        "CTD update": "3.2.P.2 / 3.2.P.5.2",
+        "Q14 anchor": "ATP and operating environment inform technology selection.",
+    },
+    {
+        "Q14 check": "Calibration model and reportable range",
+        "Status": "Partial",
+        "Risk": "High",
+        "Problem signal": "R2 passes but intercept, weighting, low-level range, LOD/LOQ, or range relative to the specification/PDE/AI level is not justified.",
+        "Evidence to request": "Calibration model, weighting rationale, intercept assessment, residuals, lower/upper range justification, and LOD/LOQ versus reference level.",
+        "CTD update": "3.2.P.5.3 / 3.2.P.5.6",
+        "Q14 anchor": "Performance should be shown over the reportable range including calibration model and range limits.",
+    },
+    {
+        "Q14 check": "Critical procedure parameters",
+        "Status": "Gap",
+        "Risk": "High",
+        "Problem signal": "pH, mobile phase, flow, column temperature, extraction, digestion, filter, wavelength, MS transition, or dissolution condition impacts are not ranked.",
+        "Evidence to request": "Risk assessment or prior-knowledge table identifying procedure parameters that can impact performance.",
+        "CTD update": "3.2.P.5.2 / 3.2.P.5.3",
+        "Q14 anchor": "Risk management should identify parameters that can impact procedure performance.",
+    },
+    {
+        "Q14 check": "Robustness and parameter ranges",
+        "Status": "Partial",
+        "Risk": "High",
+        "Problem signal": "Robustness is tested as a checklist, but parameter ranges, interactions, MODR/PAR, or edge-of-range behavior are unclear.",
+        "Evidence to request": "Robustness design, DoE or univariate range study, challenged parameters, acceptance criteria, and confirmed operating ranges.",
+        "CTD update": "3.2.P.5.3 / 3.2.P.5.6",
+        "Q14 anchor": "Robustness and analytical procedure parameter ranges support procedure understanding.",
+    },
+    {
+        "Q14 check": "Analytical procedure control strategy",
+        "Status": "Partial",
+        "Risk": "High",
+        "Problem signal": "System suitability, SST failure action, solution stability, blank/carryover, integration, sequence, sample hold, or re-injection rules are incomplete.",
+        "Evidence to request": "Procedure control strategy covering SST, sample/standard stability, blank controls, carryover, sequence controls, integration, and failure handling.",
+        "CTD update": "3.2.P.5.2 / 3.2.P.5.3",
+        "Q14 anchor": "Procedure control strategy should maintain performance in routine use.",
+    },
+    {
+        "Q14 check": "Established conditions and lifecycle change",
+        "Status": "Gap",
+        "Risk": "Medium",
+        "Problem signal": "Which method parameters are regulatory commitments, which are operational ranges, and what change category applies are not defined.",
+        "Evidence to request": "EC/PAR/MODR or lifecycle change table with reporting category, comparability expectation, and revalidation trigger.",
+        "CTD update": "3.2.P.5.2 / 3.2.P.5.3 / lifecycle management",
+        "Q14 anchor": "Enhanced understanding can support ECs and lifecycle change management.",
+    },
+    {
+        "Q14 check": "Transfer and comparability strategy",
+        "Status": "Partial",
+        "Risk": "Medium",
+        "Problem signal": "Method transfer depends only on acceptance criteria without representative samples, reference materials, or comparability logic.",
+        "Evidence to request": "Transfer protocol, representative samples/reference materials, affected performance characteristics, and comparability criteria.",
+        "CTD update": "3.2.P.5.3 / site transfer package",
+        "Q14 anchor": "Changes and transfers should evaluate affected performance characteristics and comparability.",
+    },
+]
 
 
 ELEMENTAL_IMPURITY_ELEMENTS: list[dict[str, Any]] = [
@@ -288,11 +376,31 @@ ICONS = {
 
 
 def _label(profile: dict[str, Any], lang: str) -> str:
-    return f"{profile['en']} / {profile['ko']}" if lang == "en" else f"{profile['ko']} / {profile['en']}"
+    return str(profile["en"] if lang == "en" else profile["ko"])
 
 
 def _rows(profile: dict[str, Any]) -> pd.DataFrame:
     return pd.DataFrame(profile["rows"], columns=["Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note"])
+
+
+def q14_problem_frame(test_item: str = "Analytical procedure") -> pd.DataFrame:
+    frame = pd.DataFrame(Q14_ANALYTICAL_PROCEDURE_CHECKS)
+    frame.insert(0, "Test item", test_item)
+    return frame
+
+
+def evaluate_q14_problem(row: pd.Series) -> str:
+    status = str(row.get("Status", "")).strip()
+    risk = str(row.get("Risk", "")).strip()
+    if status == "Defined":
+        return "Pass"
+    if status == "N/A":
+        return "Info"
+    if status in {"Gap", "Partial"}:
+        return "Review"
+    if risk in {"High", "Medium"}:
+        return "Review"
+    return "Info"
 
 
 def _profile(key: str) -> dict[str, Any]:
@@ -305,6 +413,16 @@ def _ensure_tables() -> dict[str, pd.DataFrame]:
     for profile in PROFILES:
         st.session_state.validation_ext_tables.setdefault(profile["key"], _rows(profile))
     return st.session_state.validation_ext_tables
+
+
+def _ensure_q14_tables() -> dict[str, pd.DataFrame]:
+    if "q14_development_tables" not in st.session_state:
+        st.session_state.q14_development_tables = {
+            profile["key"]: q14_problem_frame(_label(profile, "en")) for profile in PROFILES
+        }
+    for profile in PROFILES:
+        st.session_state.q14_development_tables.setdefault(profile["key"], q14_problem_frame(_label(profile, "en")))
+    return st.session_state.q14_development_tables
 
 
 def _element_gate(row: pd.Series) -> str:
@@ -332,8 +450,8 @@ def _svg(body: str) -> str:
 def apply_validation_extension(app: Any) -> None:
     app.APP_BUILD = APP_BUILD
     app.ICON_SVG.update(ICONS)
-    app.TEXT["ko"]["calc_help"] = "함량, 유연물질, 용출, 금속불순물, 니트로사민별 시료 제조와 결과 gate를 검토합니다."
-    app.TEXT["en"]["calc_help"] = "Review sample preparation and result gates by assay, related substances, dissolution, elemental impurities, and nitrosamines."
+    app.TEXT["ko"]["calc_help"] = "ICH Q14 분석법 설정 문제점, 시료 제조 농도, 결과 gate를 시험항목별로 검토합니다."
+    app.TEXT["en"]["calc_help"] = "Review ICH Q14 method setup risks, sample preparation, and result gates by test item."
 
     original_initialize_state = app.initialize_state
     original_response_rows = app.response_rows
@@ -343,6 +461,7 @@ def apply_validation_extension(app: Any) -> None:
         original_initialize_state()
         st.session_state.setdefault("validation_test_item", "assay")
         _ensure_tables()
+        _ensure_q14_tables()
 
     def review_frame(include_gate: bool = True) -> pd.DataFrame:
         tables = _ensure_tables()
@@ -375,40 +494,122 @@ def apply_validation_extension(app: Any) -> None:
             )
         return pd.DataFrame(rows)
 
+    def q14_report_frame(include_gate: bool = True) -> pd.DataFrame:
+        tables = _ensure_q14_tables()
+        frames = []
+        for profile in PROFILES:
+            df = tables[profile["key"]].copy().drop(columns=["Gate"], errors="ignore")
+            df["Test item"] = _label(profile, "en")
+            if include_gate:
+                df["Gate"] = df.apply(evaluate_q14_problem, axis=1)
+            frames.append(df)
+        return pd.concat(frames, ignore_index=True)
+
+    def render_q14_development_panel(profile: dict[str, Any]) -> pd.DataFrame:
+        lang = str(st.session_state.get("lang", "ko"))
+        app.mini_heading(
+            "ICH Q14 analytical procedure development check" if lang == "en" else "ICH Q14 분석법 설정 문제점",
+            "alert",
+            "orange",
+        )
+        st.info(
+            "ICH Q14 lens: validation results alone are not enough. Confirm the ATP, procedure understanding, "
+            "risk-ranked parameters, robustness/ranges, control strategy, and lifecycle change logic before treating the method as submission-ready."
+            if lang == "en"
+            else "ICH Q14 관점에서는 밸리데이션 결과만으로 충분하지 않습니다. 제출 가능한 분석법으로 보기 전에 ATP, 분석법 이해도, risk-ranked parameter, robustness/range, control strategy, lifecycle change logic을 확인해야 합니다."
+        )
+        tables = _ensure_q14_tables()
+        selected_key = str(profile["key"])
+        status_col = app.COLUMN_KO.get("Status", "Status") if lang == "ko" else "Status"
+        risk_col = app.COLUMN_KO.get("Risk", "Risk") if lang == "ko" else "Risk"
+        edited = app.delocalize_dataframe(
+            st.data_editor(
+            app.localize_dataframe(tables[selected_key], lang),
+            width="stretch",
+            num_rows="dynamic",
+            key=f"q14_editor_{selected_key}",
+            column_config={
+                status_col: st.column_config.SelectboxColumn(status_col, options=app.option_labels(Q14_STATUS_OPTIONS, lang), required=True),
+                risk_col: st.column_config.SelectboxColumn(risk_col, options=app.option_labels(["High", "Medium", "Low"], lang), required=True),
+            },
+            ),
+            lang,
+        )
+        edited = edited.copy().drop(columns=["Gate"], errors="ignore")
+        edited["Gate"] = edited.apply(evaluate_q14_problem, axis=1)
+        tables[selected_key] = edited.drop(columns=["Gate"], errors="ignore")
+        st.session_state.q14_development_tables = tables
+
+        review = edited[edited["Gate"] == "Review"]
+        high_review_count = int(((review["Risk"] == "High") & (review["Status"].isin(["Gap", "Partial"]))).sum())
+        lifecycle_review_count = int(
+            (
+                edited["Q14 check"].astype(str).str.contains("lifecycle", case=False)
+                & (edited["Gate"] == "Review")
+            ).sum()
+        )
+        metrics = st.columns(4)
+        metrics[0].metric("Q14 review items" if lang == "en" else "Q14 검토 항목", str(len(review)))
+        metrics[1].metric("High-risk gaps" if lang == "en" else "고위험 gap", str(high_review_count))
+        metrics[2].metric("Defined controls" if lang == "en" else "정의된 control", str(int((edited["Status"] == "Defined").sum())))
+        metrics[3].metric("Lifecycle gaps" if lang == "en" else "Lifecycle gap", str(lifecycle_review_count))
+
+        st.dataframe(app.display_dataframe(edited, lang), width="stretch", hide_index=True)
+        if len(review):
+            st.warning(
+                "Q14 review is triggered: the method may validate numerically but still lack development rationale or lifecycle control."
+                if lang == "en"
+                else "Q14 검토가 필요합니다. 수치상 밸리데이션은 통과해도 분석법 개발 근거 또는 lifecycle control이 부족할 수 있습니다."
+            )
+            st.dataframe(
+                app.display_dataframe(review, lang, ["Q14 check", "Status", "Risk", "Problem signal", "Evidence to request", "CTD update"]),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.success(
+                "Q14 analytical procedure development check is passing for the selected test item."
+                if lang == "en"
+                else "선택한 시험항목의 Q14 분석법 개발 검토가 통과 상태입니다."
+            )
+        return edited
+
     def concentration_review(profile: dict[str, Any]) -> dict[str, Any]:
+        lang = str(st.session_state.get("lang", "ko"))
         ref, unit_default, level, weighed, purity, stock_volume, aliquot, final_volume, dilution = profile["prep"]
         prefix = f"ext_prep_{profile['key']}"
-        st.caption(profile["focus"])
+        st.caption(app.profile_copy(profile, "focus", lang))
         c1, c2, c3 = st.columns(3)
         with c1:
-            reference_conc = st.number_input("Reference concentration at 100%", min_value=0.000001, value=float(ref), step=0.1, format="%.6f", key=f"{prefix}_ref")
-            unit = st.text_input("Concentration unit", value=str(unit_default), key=f"{prefix}_unit")
-            level_pct = st.number_input("Validation level %", min_value=0.0, value=float(level), step=5.0, key=f"{prefix}_level")
+            reference_conc = st.number_input("Reference concentration at 100%" if lang == "en" else "100% 기준농도", min_value=0.000001, value=float(ref), step=0.1, format="%.6f", key=f"{prefix}_ref")
+            unit = st.text_input("Concentration unit" if lang == "en" else "농도 단위", value=str(unit_default), key=f"{prefix}_unit")
+            level_pct = st.number_input("Validation level %" if lang == "en" else "밸리데이션 level %", min_value=0.0, value=float(level), step=5.0, key=f"{prefix}_level")
         with c2:
-            weighed_mg = st.number_input("Actual weighed amount (mg)", min_value=0.0, value=float(weighed), step=0.1, format="%.4f", key=f"{prefix}_weighed")
-            purity_pct = st.number_input("Purity / potency correction %", min_value=0.0, value=float(purity), step=0.1, format="%.4f", key=f"{prefix}_purity")
-            stock_volume_ml = st.number_input("Stock final volume (mL)", min_value=0.000001, value=float(stock_volume), step=10.0, format="%.4f", key=f"{prefix}_stock")
+            weighed_mg = st.number_input("Actual weighed amount (mg)" if lang == "en" else "실제 칭량량 (mg)", min_value=0.0, value=float(weighed), step=0.1, format="%.4f", key=f"{prefix}_weighed")
+            purity_pct = st.number_input("Purity / potency correction %" if lang == "en" else "순도 / 역가 보정 %", min_value=0.0, value=float(purity), step=0.1, format="%.4f", key=f"{prefix}_purity")
+            stock_volume_ml = st.number_input("Stock final volume (mL)" if lang == "en" else "Stock 최종부피 (mL)", min_value=0.000001, value=float(stock_volume), step=10.0, format="%.4f", key=f"{prefix}_stock")
         with c3:
-            aliquot_ml = st.number_input("Aliquot taken from stock (mL)", min_value=0.0, value=float(aliquot), step=0.1, format="%.4f", key=f"{prefix}_aliquot")
-            final_volume_ml = st.number_input("Final volume after aliquot (mL)", min_value=0.000001, value=float(final_volume), step=10.0, format="%.4f", key=f"{prefix}_final")
-            dilution_factor = st.number_input("Additional dilution factor", min_value=0.000001, value=float(dilution), step=0.5, format="%.4f", key=f"{prefix}_dilution")
+            aliquot_ml = st.number_input("Aliquot taken from stock (mL)" if lang == "en" else "Stock에서 취한량 (mL)", min_value=0.0, value=float(aliquot), step=0.1, format="%.4f", key=f"{prefix}_aliquot")
+            final_volume_ml = st.number_input("Final volume after aliquot (mL)" if lang == "en" else "희석 후 최종부피 (mL)", min_value=0.000001, value=float(final_volume), step=10.0, format="%.4f", key=f"{prefix}_final")
+            dilution_factor = st.number_input("Additional dilution factor" if lang == "en" else "추가 희석배수", min_value=0.000001, value=float(dilution), step=0.5, format="%.4f", key=f"{prefix}_dilution")
 
         calc = app.calculate_sample_prep(reference_conc, level_pct, weighed_mg, purity_pct, stock_volume_ml, aliquot_ml, final_volume_ml, dilution_factor)
         metrics = st.columns(4)
-        metrics[0].metric("Stock concentration", f"{float(calc['stock_conc']):.4f} {unit}")
-        metrics[1].metric("Actual final concentration", f"{float(calc['final_conc']):.4f} {unit}")
-        metrics[2].metric("Target concentration", f"{float(calc['target_conc']):.4f} {unit}")
-        metrics[3].metric("Actual vs target", "N/A" if calc["diff_pct"] is None else f"{float(calc['diff_pct']):+.2f}%")
+        metrics[0].metric("Stock concentration" if lang == "en" else "Stock 농도", f"{float(calc['stock_conc']):.4f} {unit}")
+        metrics[1].metric("Actual final concentration" if lang == "en" else "실제 최종농도", f"{float(calc['final_conc']):.4f} {unit}")
+        metrics[2].metric("Target concentration" if lang == "en" else "목표 농도", f"{float(calc['target_conc']):.4f} {unit}")
+        metrics[3].metric("Actual vs target" if lang == "en" else "목표 대비 차이", "N/A" if calc["diff_pct"] is None else f"{float(calc['diff_pct']):+.2f}%")
         if calc["gate"] == "Pass":
-            st.success(str(calc["message"]))
+            st.success(app.localize_note(str(calc["message"]), lang))
         elif calc["gate"] == "Review":
-            st.warning(str(calc["message"]))
+            st.warning(app.localize_note(str(calc["message"]), lang))
         else:
-            st.error(str(calc["message"]))
+            st.error(app.localize_note(str(calc["message"]), lang))
         return {"test_item": _label(profile, "en"), "reference_conc": reference_conc, "unit": unit, "final_conc": calc["final_conc"], "target_conc": calc["target_conc"], "diff_pct": calc["diff_pct"]}
 
     def lod_review(reference_conc: float, unit: str, profile: dict[str, Any]) -> list[str]:
-        app.mini_heading("LOD / LOQ and intercept risk", "trend", "orange")
+        lang = str(st.session_state.get("lang", "ko"))
+        app.mini_heading("LOD / LOQ and intercept risk" if lang == "en" else "LOD / LOQ 및 intercept 리스크", "trend", "orange")
         lod, loq, r2, slope, intercept, response_100, response_loq, lowest = profile["lod"]
         prefix = f"ext_lod_{profile['key']}"
         c1, c2, c3, c4 = st.columns(4)
@@ -416,36 +617,39 @@ def apply_validation_extension(app: Any) -> None:
             lod = st.number_input("LOD", min_value=0.0, value=float(lod), step=0.01, format="%.6f", key=f"{prefix}_lod")
             loq = st.number_input("LOQ", min_value=0.0, value=float(loq), step=0.01, format="%.6f", key=f"{prefix}_loq")
         with c2:
-            r2 = st.number_input("Linearity R2", min_value=0.0, max_value=1.0, value=float(r2), step=0.0001, format="%.6f", key=f"{prefix}_r2")
-            st.number_input("Mean slope", value=float(slope), step=100.0, format="%.4f", key=f"{prefix}_slope")
+            r2 = st.number_input("Linearity R2" if lang == "en" else "직선성 R2", min_value=0.0, max_value=1.0, value=float(r2), step=0.0001, format="%.6f", key=f"{prefix}_r2")
+            st.number_input("Mean slope" if lang == "en" else "평균 slope", value=float(slope), step=100.0, format="%.4f", key=f"{prefix}_slope")
         with c3:
-            intercept = st.number_input("Mean intercept", value=float(intercept), step=10.0, format="%.4f", key=f"{prefix}_intercept")
-            response_100 = st.number_input("Response at 100%", min_value=0.000001, value=float(response_100), step=100.0, format="%.4f", key=f"{prefix}_r100")
+            intercept = st.number_input("Mean intercept" if lang == "en" else "평균 intercept", value=float(intercept), step=10.0, format="%.4f", key=f"{prefix}_intercept")
+            response_100 = st.number_input("Response at 100%" if lang == "en" else "100% response", min_value=0.000001, value=float(response_100), step=100.0, format="%.4f", key=f"{prefix}_r100")
         with c4:
-            response_loq = st.number_input("Response at LOQ", min_value=0.000001, value=float(response_loq), step=50.0, format="%.4f", key=f"{prefix}_rloq")
-            lowest = st.number_input("Lowest linearity level %", min_value=0.0, value=float(lowest), step=5.0, key=f"{prefix}_lowest")
+            response_loq = st.number_input("Response at LOQ" if lang == "en" else "LOQ response", min_value=0.000001, value=float(response_loq), step=50.0, format="%.4f", key=f"{prefix}_rloq")
+            lowest = st.number_input("Lowest linearity level %" if lang == "en" else "최저 직선성 level %", min_value=0.0, value=float(lowest), step=5.0, key=f"{prefix}_lowest")
         result = app.evaluate_lod_linearity(reference_conc, lod, loq, r2, intercept, response_100, response_loq, lowest)
         cols = st.columns(4)
-        cols[0].metric("LOD / reference", f"{float(result['lod_pct']):.2f}%")
-        cols[1].metric("LOQ / reference", f"{float(result['loq_pct']):.2f}%")
-        cols[2].metric("Intercept / 100% response", f"{float(result['intercept_100_pct']):.2f}%")
-        cols[3].metric("Intercept / LOQ response", f"{float(result['intercept_loq_pct']):.2f}%")
+        cols[0].metric("LOD / reference" if lang == "en" else "LOD / 기준농도", f"{float(result['lod_pct']):.2f}%")
+        cols[1].metric("LOQ / reference" if lang == "en" else "LOQ / 기준농도", f"{float(result['loq_pct']):.2f}%")
+        cols[2].metric("Intercept / 100% response" if lang == "en" else "Intercept / 100% response", f"{float(result['intercept_100_pct']):.2f}%")
+        cols[3].metric("Intercept / LOQ response" if lang == "en" else "Intercept / LOQ response", f"{float(result['intercept_loq_pct']):.2f}%")
         notes = list(result["notes"])
         app.mini_heading(app.tr(st.session_state.lang, "risk_notes"), "alert", "orange")
         for note in notes:
-            st.success(note) if "acceptable" in note else st.warning(note)
+            st.success(app.localize_note(note, lang)) if "acceptable" in note else st.warning(app.localize_note(note, lang))
         return [f"{_label(profile, 'en')}: LOD {lod:.6f} {unit}", f"{_label(profile, 'en')}: LOQ {loq:.6f} {unit}", *notes]
 
     def render_related_pde_panel() -> pd.DataFrame:
-        app.mini_heading("Related substance PDE/TDI limit / 유연물질 PDE 기준량", "impurity", "gold")
+        lang = str(st.session_state.get("lang", "ko"))
+        app.mini_heading("Related substance PDE/TDI limit" if lang == "en" else "유연물질 PDE/TDI 기준량", "impurity", "gold")
         st.info(
             "ICH Q3B(R2) applies reporting, identification, and qualification thresholds by maximum daily dose. "
             "If a product-specific PDE/TDI or acceptable intake is lower, use that value to calculate the validation target."
+            if lang == "en"
+            else "ICH Q3B(R2)는 최대일일복용량에 따라 reporting, identification, qualification threshold를 적용합니다. 제품별 PDE/TDI 또는 acceptable intake가 더 낮다면 그 값을 기준으로 밸리데이션 target을 계산해야 합니다."
         )
         c1, c2, c3 = st.columns(3)
         with c1:
             mdd_mg_day = st.number_input(
-                "Maximum daily dose of drug substance (mg/day)",
+                "Maximum daily dose of drug substance (mg/day)" if lang == "en" else "원료의약품 최대일일복용량 (mg/day)",
                 min_value=0.000001,
                 value=50.0,
                 step=10.0,
@@ -454,7 +658,7 @@ def apply_validation_extension(app: Any) -> None:
             )
         with c2:
             impurity_pde_ug_day = st.number_input(
-                "Product-specific impurity PDE/TDI (ug/day)",
+                "Product-specific impurity PDE/TDI (ug/day)" if lang == "en" else "제품별 유연물질 PDE/TDI (ug/day)",
                 min_value=0.0,
                 value=200.0,
                 step=10.0,
@@ -463,7 +667,7 @@ def apply_validation_extension(app: Any) -> None:
             )
         with c3:
             sample_conc_mg_ml = st.number_input(
-                "Main sample concentration at 100% (mg/mL)",
+                "Main sample concentration at 100% (mg/mL)" if lang == "en" else "100% 주시료 농도 (mg/mL)",
                 min_value=0.000001,
                 value=0.5,
                 step=0.1,
@@ -474,13 +678,13 @@ def apply_validation_extension(app: Any) -> None:
         frame = q3b_threshold_frame(mdd_mg_day, impurity_pde_ug_day, sample_conc_mg_ml)
         target = frame[frame["Threshold"] == "Validation target"].iloc[0]
         metrics = st.columns(4)
-        metrics[0].metric("Validation target", f"{float(target['Limit (%)']):.4f}%")
-        metrics[1].metric("Target concentration", f"{float(target['Method concentration (ug/mL)']):.4f} ug/mL")
+        metrics[0].metric("Validation target" if lang == "en" else "밸리데이션 target", f"{float(target['Limit (%)']):.4f}%")
+        metrics[1].metric("Target concentration" if lang == "en" else "Target 농도", f"{float(target['Method concentration (ug/mL)']):.4f} ug/mL")
         metrics[2].metric("MDD", f"{mdd_mg_day:.4g} mg/day")
         metrics[3].metric("PDE/TDI", f"{impurity_pde_ug_day:.4g} ug/day" if impurity_pde_ug_day > 0 else "Not entered")
-        st.dataframe(frame, width="stretch", hide_index=True)
+        st.dataframe(app.display_dataframe(frame, lang), width="stretch", hide_index=True)
         st.session_state.related_pde_frame = frame
-        if st.button("Apply calculated 기준농도 to sample prep", key="apply_related_pde_ref", use_container_width=True):
+        if st.button("Apply calculated reference concentration to sample prep" if lang == "en" else "계산된 기준농도를 시료 제조에 적용", key="apply_related_pde_ref", use_container_width=True):
             st.session_state["ext_prep_related_substances_ref"] = float(target["Method concentration (ug/mL)"])
             st.session_state["ext_prep_related_substances_unit"] = "ug/mL"
             st.session_state["ext_prep_related_substances_level"] = 100.0
@@ -488,13 +692,14 @@ def apply_validation_extension(app: Any) -> None:
         return frame
 
     def render_elemental_scope_panel() -> None:
-        app.mini_heading("ICH Q3D elemental impurity scope / 금속불순물 24종 범위", "atom", "green")
+        lang = str(st.session_state.get("lang", "ko"))
+        app.mini_heading("ICH Q3D elemental impurity scope" if lang == "en" else "ICH Q3D 금속불순물 범위", "atom", "green")
         c_route, c_mdd = st.columns(2)
         with c_route:
-            route = st.selectbox("Route of administration / 투여경로", ["Oral", "Parenteral", "Inhalation"], key="q3d_route")
+            route = st.selectbox("Route of administration" if lang == "en" else "투여경로", ["Oral", "Parenteral", "Inhalation"], key="q3d_route")
         with c_mdd:
             daily_intake_g_day = st.number_input(
-                "Maximum daily product intake (g/day)",
+                "Maximum daily product intake (g/day)" if lang == "en" else "완제 최대일일복용량 (g/day)",
                 min_value=0.000001,
                 value=2.5,
                 step=0.5,
@@ -502,7 +707,7 @@ def apply_validation_extension(app: Any) -> None:
                 key="q3d_daily_intake_g_day",
             )
         mode = st.radio(
-            "Q3D scope mode",
+            "Q3D scope mode" if lang == "en" else "Q3D 검토 범위",
             ["Core 7: Class 1 + Class 2A", "Full Q3D 24 elements"],
             horizontal=True,
             key="q3d_scope_mode",
@@ -520,15 +725,17 @@ def apply_validation_extension(app: Any) -> None:
         included = element_df[element_df["Include"]]
         class_counts = included["ICH Q3D class"].value_counts().to_dict()
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Included elements", f"{len(included)} / 24")
+        c1.metric("Included elements" if lang == "en" else "포함 원소", f"{len(included)} / 24")
         c2.metric("Class 1", str(class_counts.get("Class 1", 0)))
         c3.metric("Class 2A", str(class_counts.get("Class 2A", 0)))
-        c4.metric("Gate review", str(int((included["Gate"] == "Review").sum())))
+        c4.metric("Gate review" if lang == "en" else "Gate 검토", str(int((included["Gate"] == "Review").sum())))
 
         st.info(
             "Q3D practical read: Core 7 covers Class 1 (As, Cd, Hg, Pb) plus Class 2A "
             "(Co, Ni, V). Full Q3D screening expands to all 24 elements including Class 2B and Class 3. "
             "Permitted concentration is calculated as PDE (ug/day) / maximum daily product intake (g/day)."
+            if lang == "en"
+            else "Q3D 실무 해석: Core 7은 Class 1(As, Cd, Hg, Pb)과 Class 2A(Co, Ni, V)를 포함합니다. Full Q3D screening은 Class 2B와 Class 3를 포함한 24종 전체로 확장됩니다. 허용농도는 PDE(ug/day) / 완제 최대일일복용량(g/day)으로 계산합니다."
         )
         edited_elements = st.data_editor(
             element_df.drop(
@@ -571,7 +778,9 @@ def apply_validation_extension(app: Any) -> None:
 
         active = edited_elements[edited_elements["Include"]]
         st.dataframe(
-            active[
+            app.display_dataframe(
+                active,
+                lang,
                 [
                     "Element",
                     "ICH Q3D class",
@@ -585,15 +794,23 @@ def apply_validation_extension(app: Any) -> None:
                     "Precision RSD (%)",
                     "Gate",
                     "Note",
-                ]
-            ],
+                ],
+            ),
             width="stretch",
             hide_index=True,
         )
         if scope_key == "core7" and len(active) < 7:
-            st.warning("Core 7 mode should normally retain As, Cd, Hg, Pb, Co, Ni, and V unless a documented product risk rationale excludes an element.")
+            st.warning(
+                "Core 7 mode should normally retain As, Cd, Hg, Pb, Co, Ni, and V unless a documented product risk rationale excludes an element."
+                if lang == "en"
+                else "Core 7 모드에서는 제품별 risk rationale이 문서화되어 제외되지 않는 한 As, Cd, Hg, Pb, Co, Ni, V를 유지하는 것이 일반적입니다."
+            )
         if scope_key == "full24" and len(active) < 24:
-            st.warning("Full Q3D 24 mode is selected, but not all 24 elements are included. Confirm the exclusion rationale.")
+            st.warning(
+                "Full Q3D 24 mode is selected, but not all 24 elements are included. Confirm the exclusion rationale."
+                if lang == "en"
+                else "Full Q3D 24 모드가 선택되었지만 24종 전체가 포함되지 않았습니다. 제외 근거를 확인하세요."
+            )
 
     def q3d_scope_report_frame() -> pd.DataFrame:
         if "q3d_element_df" not in st.session_state:
@@ -626,7 +843,7 @@ def apply_validation_extension(app: Any) -> None:
             """,
             unsafe_allow_html=True,
         )
-        app.mini_heading("시험항목별 밸리데이션 선택 / Test-specific validation review", "shield", "orange")
+        app.mini_heading(app.tr(lang, "validation_select"), "shield", "orange")
         tables = _ensure_tables()
         current = st.session_state.get("validation_test_item", "assay")
         cards = []
@@ -635,17 +852,37 @@ def apply_validation_extension(app: Any) -> None:
             df["Gate"] = df.apply(app.evaluate_rule, axis=1)
             review = int((df["Gate"] == "Review").sum())
             selected = " vcc-selected" if profile["key"] == current else ""
-            cards.append(f'<article class="vcc-card{selected}" style="--tone:{profile["tone"]}"><span class="vcc-icon">{_svg(ICONS[profile["icon"]])}</span><strong>{escape(_label(profile, lang))}</strong><p>{escape(profile["purpose"])}</p><p>{review} review</p></article>')
+            cards.append(
+                f'<article class="vcc-card{selected}" style="--tone:{profile["tone"]}">'
+                f'<span class="vcc-icon">{_svg(ICONS[profile["icon"]])}</span>'
+                f'<strong>{escape(_label(profile, lang))}</strong>'
+                f'<p>{escape(app.profile_copy(profile, "purpose", lang))}</p>'
+                f'<p>{review} {"review" if lang == "en" else "검토"}</p>'
+                f'</article>'
+            )
         st.markdown(f'<div class="vcc-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
         cols = st.columns(len(PROFILES))
         for idx, profile in enumerate(PROFILES):
+            item_label = _label(profile, lang)
+            button_label = f"{item_label} {app.tr(lang, 'selected')}" if profile["key"] == current else (
+                f"Open {item_label}" if lang == "en" else f"{item_label} {app.tr(lang, 'open_review')}"
+            )
             with cols[idx]:
-                if st.button("Selected" if profile["key"] == current else "Open review", key=f"vcc_ext_{profile['key']}", use_container_width=True, type="primary" if profile["key"] == current else "secondary"):
+                if st.button(button_label, key=f"vcc_ext_{profile['key']}", use_container_width=True, type="primary" if profile["key"] == current else "secondary"):
                     st.session_state.validation_test_item = profile["key"]
                     st.rerun()
 
         profile = _profile(str(st.session_state.get("validation_test_item", "assay")))
-        st.markdown(f'<div class="vcc-basis" style="--tone:{profile["tone"]}"><strong>{escape(_label(profile, lang))} review basis</strong><br><b>Regulatory basis:</b> {escape(profile["basis"])}<br><b>CTD location:</b> {escape(profile["ctd"])}<br><b>ICH M14 note:</b> {escape(profile["m14"])}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="vcc-basis" style="--tone:{profile["tone"]}">'
+            f'<strong>{escape(_label(profile, lang))} {escape(app.tr(lang, "validation_basis"))}</strong><br>'
+            f'<b>{escape(app.tr(lang, "regulatory_basis"))}:</b> {escape(profile["basis"])}<br>'
+            f'<b>{escape(app.tr(lang, "ctd_location"))}:</b> {escape(profile["ctd"])}<br>'
+            f'<b>{escape(app.tr(lang, "m14_note"))}:</b> {escape(app.profile_copy(profile, "m14", lang))}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        render_q14_development_panel(profile)
         if profile["key"] == "related_substances":
             render_related_pde_panel()
         if profile["key"] == "elemental_impurities":
@@ -654,17 +891,27 @@ def apply_validation_extension(app: Any) -> None:
         calc = concentration_review(profile)
         notes = lod_review(float(calc["reference_conc"]), str(calc["unit"]), profile)
         app.mini_heading(app.tr(lang, "validation_gate"), "shield", "orange")
-        st.info(f"Required result inputs for {_label(profile, lang)}: {'; '.join(str(item) for item in tables[profile['key']]['Item'].tolist())}")
-        edited = st.data_editor(tables[profile["key"]], width="stretch", num_rows="dynamic", column_config={"Rule": st.column_config.SelectboxColumn("Rule", options=["between", "gte", "lte", "info"], required=True)}, key=f"vcc_ext_editor_{profile['key']}")
+        st.info(f"{app.tr(lang, 'result_inputs')} - {_label(profile, lang)}: {'; '.join(str(item) for item in tables[profile['key']]['Item'].tolist())}")
+        rule_col = app.COLUMN_KO.get("Rule", "Rule") if lang == "ko" else "Rule"
+        edited = app.delocalize_dataframe(
+            st.data_editor(
+                app.localize_dataframe(tables[profile["key"]], lang),
+                width="stretch",
+                num_rows="dynamic",
+                column_config={rule_col: st.column_config.SelectboxColumn(rule_col, options=["between", "gte", "lte", "info"], required=True)},
+                key=f"vcc_ext_editor_{profile['key']}",
+            ),
+            lang,
+        )
         edited = edited.copy().drop(columns=["Gate"], errors="ignore")
         edited["Gate"] = edited.apply(app.evaluate_rule, axis=1)
         tables[profile["key"]] = edited.drop(columns=["Gate"], errors="ignore")
         st.session_state.validation_ext_tables = tables
-        st.dataframe(edited, width="stretch", hide_index=True)
+        st.dataframe(app.display_dataframe(edited, lang), width="stretch", hide_index=True)
         review_count = int((edited["Gate"] == "Review").sum())
-        st.warning(f"{review_count} validation result item(s) need review before the Decision Packet is treated as ready.") if review_count else st.success("Validation result gate is passing for the selected test item.")
-        app.mini_heading("시험항목별 전체 Gate 요약 / Overall validation item summary", "trend", "orange")
-        st.dataframe(summary_frame(), width="stretch", hide_index=True)
+        st.warning(f"{review_count} {app.tr(lang, 'validation_review_warning')}") if review_count else st.success(app.tr(lang, "validation_review_success"))
+        app.mini_heading(app.tr(lang, "overall_validation_summary"), "trend", "orange")
+        st.dataframe(app.display_dataframe(summary_frame(), lang), width="stretch", hide_index=True)
         st.session_state["last_calc"] = calc
         st.session_state["last_risk_notes"] = notes
 
@@ -680,6 +927,17 @@ def apply_validation_extension(app: Any) -> None:
                     "Evidence needed": str(row["Note"]),
                     "CTD update": str(row["CTD update"]),
                     "Owner": "Analytical / CMC RA",
+                }
+            )
+        q14_reviews = q14_report_frame(include_gate=True)
+        for _, row in q14_reviews[q14_reviews["Gate"] == "Review"].head(12).iterrows():
+            additions.append(
+                {
+                    "Question": f"Please provide the ICH Q14 analytical procedure development rationale for {row['Test item']} - {row['Q14 check']}.",
+                    "Triggered by": f"Q14 method setup review: {row['Status']} / {row['Risk']} risk",
+                    "Evidence needed": str(row["Evidence to request"]),
+                    "CTD update": str(row["CTD update"]),
+                    "Owner": "Analytical Development / CMC RA",
                 }
             )
         q3d_reviews = q3d_scope_report_frame()
@@ -709,6 +967,11 @@ def apply_validation_extension(app: Any) -> None:
     def build_decision_packet(profile: dict[str, Any]) -> str:
         packet = original_build_decision_packet(profile)
         summary = app.markdown_table(summary_frame(), ["Test item", "Gate", "Review items", "Regulatory basis", "CTD update"])
+        q14_reviews = q14_report_frame(include_gate=True)
+        q14_md = app.markdown_table(
+            q14_reviews,
+            ["Test item", "Q14 check", "Status", "Risk", "Gate", "Problem signal", "Evidence to request", "CTD update"],
+        )
         reviews = review_frame(include_gate=True)
         review_md = app.markdown_table(reviews[reviews["Gate"] == "Review"], ["Test item", "Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note", "CTD update"])
         related_pde = related_pde_report_frame()
@@ -734,7 +997,7 @@ def apply_validation_extension(app: Any) -> None:
                 "Note",
             ],
         )
-        extra = f"## Test-Specific Validation Summary\n\n{summary}\n### Related Substance PDE/TDI Basis\n\n{related_pde_md}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
+        extra = f"## ICH Q14 Analytical Procedure Development Check\n\n{q14_md}\n## Test-Specific Validation Summary\n\n{summary}\n### Related Substance PDE/TDI Basis\n\n{related_pde_md}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
         return packet.replace("## Response Memo Seed", extra + "\n## Response Memo Seed")
 
     app.initialize_state = initialize_state
