@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+import pandas as pd
 from streamlit.testing.v1 import AppTest
 
 
@@ -24,11 +25,13 @@ def collect_visible_text(page: AppTest) -> str:
         "number_input",
         "text_input",
         "text_area",
+        "dataframe",
+        "data_editor",
     ]:
         collection = getattr(page, collection_name, [])
         blocks += [getattr(item, "value", "") for item in collection]
         blocks += [getattr(item, "label", "") for item in collection]
-    return "\n".join(str(block) for block in blocks if block)
+    return "\n".join(str(block) for block in blocks if block is not None and str(block))
 
 
 def run_page(page_key: str, expected_text: list[str]) -> str:
@@ -43,6 +46,37 @@ def run_page(page_key: str, expected_text: list[str]) -> str:
     if missing:
         raise AssertionError(f"{page_key} page is missing expected items: {missing}")
     return text
+
+
+def assert_body_translation() -> None:
+    import app as app_module
+
+    profile = {
+        "active_substance": "Naltrexone",
+        "api_supplier": "API supplier / DMF holder to confirm",
+        "formulation_platform": "PLGA long-acting microsphere",
+        "clinical_material": "Clinical batch genealogy to confirm",
+        "target_regions": "US / Korea / EU strategy to confirm",
+    }
+    checks = {
+        "document logic": app_module.localize_dataframe(pd.DataFrame(app_module.default_document_logic_rows()), "ko"),
+        "profile prompts": app_module.localize_dataframe(app_module.product_profile_prompts(profile), "ko"),
+        "evidence map": app_module.localize_dataframe(pd.DataFrame(app_module.default_evidence_rows()), "ko"),
+        "spec rationale": app_module.localize_dataframe(pd.DataFrame(app_module.default_spec_rows()), "ko"),
+        "dmf bridge": app_module.localize_dataframe(pd.DataFrame(app_module.default_dmf_rows()), "ko"),
+    }
+    expected = {
+        "document logic": ["API 패키지가 완제 조성", "근거 없는 기준이나 계산 오류"],
+        "profile prompts": ["임상시험용 의약품에 사용된 API", "현재 DMF 버전과 공급자 commitment"],
+        "evidence map": ["API 동일성, 명칭, 구조", "P.5.6 설정 근거"],
+        "spec rationale": ["함량 기준이 API 역가", "무균보증 전략"],
+        "dmf bridge": ["현재 DMF 버전과 holder", "완제 CQA 및 시험방법 관리"],
+    }
+    for label, frame in checks.items():
+        text = frame.to_string()
+        missing = [item for item in expected[label] if item not in text]
+        if missing:
+            raise AssertionError(f"{label} Korean body translation missing: {missing}")
 
 
 def main() -> None:
@@ -91,11 +125,12 @@ def main() -> None:
         "spec": ["02 P.5.6 기준 설정 근거", "심사 리스크 집중 검토"],
         "dmf": ["03 DMF-완제 연결성"],
         "validation": ["04 계산 / 밸리데이션", "시험항목별 밸리데이션 선택"],
-        "response": ["05 RA 답변 메모", "CMC RA Decision Packet 미리보기", "Markdown 미리보기"],
+        "response": ["05 RA 답변 메모", "CMC RA Decision Packet 미리보기", "Markdown 미리보기", "API 패키지가 완제 조성"],
         "launcher": ["앱 실행", "Clinical Trial Intelligence", "ToxiGuard-SOP Gate", "ToxiGuard-MediLens"],
     }
     for page_key, expected in page_checks.items():
         run_page(page_key, expected)
+    assert_body_translation()
 
     validation_page = AppTest.from_file(str(APP))
     validation_page.session_state["entered_app"] = True

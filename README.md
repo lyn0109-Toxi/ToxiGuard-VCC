@@ -26,6 +26,7 @@ Document received -> Source text / confirmed value -> Key CMC decision point -> 
 
 - Full-screen ToxiGuard Platform landing image that enters the app on click
 - Korean / English screen switch
+- Korean body localization for risk questions, insight prompts, document application logic, and Decision Packet preview
 - Product profile sidebar with API, DMF holder, formulation platform, clinical material, and target-region fields
 - Consultant-first `Client CTD Intake` screen
 - Editable `Document Input` workspace for DMF source text, CTD 3.2.S, CTD 3.2.P, and other CTD modules

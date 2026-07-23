@@ -362,6 +362,161 @@ KO_TO_VALUE: dict[str, str] = {value: key for key, value in VALUE_KO.items()}
 KO_TO_COLUMN: dict[str, str] = {value: key for key, value in COLUMN_KO.items()}
 
 
+CONTENT_KO: dict[str, str] = {
+    "Product profile / scope setting": "제품 프로필 / 검토 범위 설정",
+    "Raw material / DMF intake": "원료 / DMF 접수",
+    "Formulation development": "제형 개발",
+    "Manufacturing process": "제조공정",
+    "Specification and analytical control": "규격 및 분석 관리",
+    "Stability and shelf-life": "안정성 및 사용기간",
+    "Clinical material bridge": "임상시험용 의약품 연결성",
+    "Regional submission / response": "지역별 허가 / 보완 답변",
+    "Which CTD modules and CMC documents are actually needed for this product?": "이 제품에 실제로 필요한 CTD 모듈과 CMC 문서는 무엇인가?",
+    "Does the API package support the drug product formula, clinical material, and final quality strategy?": "API 패키지가 완제 조성, 임상시험용 의약품, 최종 품질전략을 지지하는가?",
+    "Can the selected formulation be defended as clinically relevant and commercially reproducible?": "선택한 제형이 임상적으로 타당하고 상업적으로 재현 가능하다고 방어할 수 있는가?",
+    "Do process controls explain and protect the critical quality attributes?": "공정 관리가 핵심품질특성(CQA)을 설명하고 보호하는가?",
+    "Is each quality criterion supported by data, validated method capability, safety or performance relevance, and batch/stability history?": "각 품질기준이 배치자료, 안정성, 밸리데이션된 분석능, 안전성 또는 성능 관련성으로 뒷받침되는가?",
+    "Does the stability package support the proposed shelf-life and the selected release/stability specification?": "안정성 패키지가 제안 사용기간과 출하/안정성 규격을 지지하는가?",
+    "Can the clinical trial material represent the proposed commercial drug product?": "임상시험용 의약품이 제안 상업제품을 대표한다고 설명할 수 있는가?",
+    "Where should the answer live in CTD, and which source evidence makes it defensible?": "답변은 CTD 어디에 반영되어야 하며, 어떤 원문 근거가 이를 방어 가능하게 하는가?",
+    "Documents may be reviewed without the product context needed to judge formulation, process, specification, and regional expectations.": "제품 맥락 없이 문서를 검토하면 제형, 공정, 규격, 지역별 요구사항 판단이 빗나갈 수 있습니다.",
+    "A wrong raw-material assumption can affect formula calculation, impurity limits, release profile, stability, and later comparability arguments.": "원료에 대한 잘못된 가정은 조성 계산, 불순물 기준, 방출 profile, 안정성, 이후 comparability 논리에 영향을 줄 수 있습니다.",
+    "A late formulation change can become a comparability, stability, nonclinical, clinical, or reviewer-question issue.": "늦은 제형 변경은 comparability, 안정성, 비임상, 임상 또는 심사자 질문 이슈로 커질 수 있습니다.",
+    "Process or scale changes may alter particle attributes, release, residual solvent, sterility assurance, or stability trend.": "공정 또는 scale 변경은 입자 특성, 방출, 잔류용매, 무균보증, 안정성 trend를 바꿀 수 있습니다.",
+    "Unsupported limits or calculation errors can make the specification indefensible even when the table itself looks complete.": "표가 완성되어 보여도, 근거 없는 기준이나 계산 오류가 있으면 규격은 방어하기 어렵습니다.",
+    "Late stability drift can force shelf-life reduction, specification revision, additional batches, or agency questions.": "후기 안정성 drift는 사용기간 축소, 규격 수정, 추가 배치, 규제기관 질문으로 이어질 수 있습니다.",
+    "A major CMC difference can trigger bridging, comparability justification, additional stability, nonclinical, clinical, or regulatory review needs.": "중대한 CMC 차이는 bridging, comparability 설명, 추가 안정성, 비임상, 임상 또는 규제 검토 필요성을 만들 수 있습니다.",
+    "A response can sound plausible but fail because it is not anchored to the correct CTD section or source document.": "답변 문구가 그럴듯해도 올바른 CTD 위치와 원문 근거에 묶이지 않으면 방어력이 떨어집니다.",
+    "The product profile determines which DMF and CTD evidence is applicable.": "제품 프로필은 어떤 DMF 및 CTD 근거가 적용되는지를 결정합니다.",
+    "Use the profile to decide document request scope before judging sufficiency.": "문서 충분성을 판단하기 전에 제품 프로필로 요청 문서 범위를 먼저 정하세요.",
+    "Confirm product profile before judging document sufficiency.": "문서가 충분한지 판단하기 전에 제품 프로필을 먼저 확정하세요.",
+    "Request source text and confirmed values for API identity, grade, specification, impurity, and retest controls.": "API 동일성, grade, 규격, 불순물, retest 관리에 대한 원문 발췌와 확인값을 요청하세요.",
+    "Link formulation variables to release, stability, manufacturability, and specification rationale.": "제형 변수를 방출, 안정성, 제조가능성, 기준설정 근거와 연결하세요.",
+    "Trace each critical step to CQA, IPC, batch analysis, and stability evidence.": "각 중요 공정단계를 CQA, IPC, 배치분석, 안정성 근거와 추적 연결하세요.",
+    "Convert every missing rationale into a reviewer question and evidence request.": "누락된 모든 설정 근거를 심사자 질문과 근거 요청으로 전환하세요.",
+    "Connect trend evidence to acceptance criteria, degradation risk, and shelf-life justification.": "Trend 근거를 허용기준, 분해 리스크, 사용기간 설정 근거와 연결하세요.",
+    "List each post-clinical CMC difference and define the needed bridge evidence.": "임상 이후 CMC 차이를 항목별로 정리하고 필요한 bridge 근거를 정의하세요.",
+    "Write responses only after the source evidence, CTD location, and owner are traceable.": "원문 근거, CTD 위치, 담당자가 추적 가능할 때 답변을 작성하세요.",
+    "Product-profile-driven review prompts": "제품 프로필 기반 검토 질문",
+    "DMF-to-DP bridge and API evidence request list": "DMF-to-DP bridge 및 API 근거 요청 리스트",
+    "P.2 evidence map and formulation-risk memo": "P.2 근거 맵 및 제형 리스크 메모",
+    "Manufacturing control and clinical-batch representativeness note": "제조 관리 및 임상 배치 대표성 메모",
+    "P.5.6 rationale and calculation/validation review memo": "P.5.6 기준설정 근거 및 계산/밸리데이션 검토 메모",
+    "Stability evidence and commitment map": "안정성 근거 및 commitment map",
+    "Clinical-material representativeness memo": "임상시험용 의약품 대표성 메모",
+    "CMC RA response memo and CTD update action table": "CMC RA 답변 메모 및 CTD 업데이트 action table",
+    "API identity, grade, salt/form, potency/water correction, impurity carryover": "API 동일성, grade, 염/형태, 역가/수분 보정, 불순물 carryover",
+    "DMF access, supplier qualification, change notification, manufacturing-site traceability": "DMF 접근권, 공급자 qualification, 변경 통지, 제조소 추적성",
+    "QTPP/CQA, formulation variables, process design, release profile, manufacturability": "QTPP/CQA, 제형 변수, 공정 설계, 방출 profile, 제조가능성",
+    "Clinical batch genealogy, representativeness, comparability, bridging risk": "임상 배치 계보, 대표성, comparability, bridging 리스크",
+    "Regional Module 1 expectations, QOS narrative, CTD placement, agency response style": "지역별 Module 1 요구사항, QOS narrative, CTD 반영 위치, 규제기관 답변 방식",
+    "Is the API used for clinical material the same material strategy intended for the final DP?": "임상시험용 의약품에 사용된 API가 최종 완제 전략과 동일한 material strategy인가?",
+    "Can the applicant defend the current DMF version and supplier commitment?": "신청자가 현재 DMF 버전과 공급자 commitment를 방어할 수 있는가?",
+    "Does the formulation platform remain bridgeable from clinical to commercial product?": "이 제형 플랫폼은 임상제품에서 상업제품으로 bridge 가능하게 유지되는가?",
+    "Can the clinical trial material be justified as representative of the proposed commercial product?": "임상시험용 의약품이 제안 상업제품을 대표한다고 설명할 수 있는가?",
+    "Which regional requirements change the evidence package or CTD update location?": "어떤 지역별 요구사항이 근거 패키지나 CTD 반영 위치를 바꾸는가?",
+    "Is API identity, nomenclature, structure, salt form, and physicochemical profile defined?": "API 동일성, 명칭, 구조, 염 형태, 물리화학적 특성이 정의되어 있는가?",
+    "Are API manufacturer, route, critical steps, controls, and change notification traceable?": "API 제조원, 제조경로, 중요 단계, 관리전략, 변경 통지가 추적 가능한가?",
+    "Are API impurities, degradation pathways, polymorph/PSD/water attributes characterized for DP impact?": "API 불순물, 분해경로, 결정형/PSD/수분 특성이 완제 영향 관점에서 characterization 되어 있는가?",
+    "Do API specifications, methods, validation, batch results, and justification support DP control strategy?": "API 규격, 시험방법, 밸리데이션, 배치 결과, 설정 근거가 완제 관리전략을 지지하는가?",
+    "Does API retest period, storage condition, and packaging support DP manufacturing and shelf-life strategy?": "API retest period, 보관조건, 포장이 완제 제조와 사용기간 전략을 지지하는가?",
+    "Is product identity, composition, strength, route, and packaging clearly defined?": "제품 동일성, 조성, 함량, 투여경로, 포장이 명확히 정의되어 있는가?",
+    "Does development rationale support QTPP, CQA, formulation, and process choices?": "개발 근거가 QTPP, CQA, 제형 및 공정 선택을 지지하는가?",
+    "Can the commercial process and IPC strategy consistently produce target quality?": "상업 공정과 IPC 전략이 목표 품질을 일관되게 만들 수 있는가?",
+    "Do specifications, methods, validation, and batch data support release and shelf-life quality?": "규격, 시험방법, 밸리데이션, 배치자료가 출하 및 사용기간 품질을 지지하는가?",
+    "Does container closure evidence support compatibility, protection, and use?": "용기마개 근거가 적합성, 보호성, 사용성을 지지하는가?",
+    "Do stability data support proposed storage condition and shelf-life?": "안정성 자료가 제안 보관조건과 사용기간을 지지하는가?",
+    "Complete P.5.6 rationale and validation gate review.": "P.5.6 설정 근거와 밸리데이션 gate 검토를 완료하세요.",
+    "Add trend table, shelf-life justification, and commitment.": "Trend table, 사용기간 설정 근거, commitment를 추가하세요.",
+    "Is assay basis aligned with API potency and water correction?": "함량 기준이 API 역가 및 수분 보정과 일치하는가?",
+    "Are degradation products qualified and controlled through shelf-life?": "분해산물이 사용기간 동안 qualification 및 관리되는가?",
+    "Does the method discriminate formulation or process changes?": "시험방법이 제형 또는 공정 변경을 구분할 수 있는가?",
+    "Is particle size linked to release profile and stability?": "입자도가 방출 profile 및 안정성과 연결되어 있는가?",
+    "Is solvent removal controlled by process parameters?": "잔류용매 제거가 공정변수로 관리되는가?",
+    "Is sterility assurance strategy supported by process validation?": "무균보증 전략이 공정 밸리데이션으로 뒷받침되는가?",
+    "Regulatory reference for API quality sections": "API 품질 항목에 대한 규제상 참조 근거",
+    "Batch formula, assay calculation, label claim": "배치 조성, 함량 계산, 표시량",
+    "Potency correction, stability, process moisture risk": "역가 보정, 안정성, 공정 중 수분 리스크",
+    "Related substances specification and stability trend": "유연물질 규격 및 안정성 trend",
+    "Manufacturing hold time, stability commitment": "제조 hold time, 안정성 commitment",
+    "Confirm current DMF version and holder commitment.": "현재 DMF 버전과 holder commitment를 확인하세요.",
+    "Align potency correction with assay and sample prep calculation.": "역가 보정을 함량시험 및 시료 제조 계산과 정렬하세요.",
+    "Check water impact on actual theoretical value.": "수분이 실제 이론값에 미치는 영향을 확인하세요.",
+    "Bridge API PSD to DP CQA and method control.": "API PSD를 완제 CQA 및 시험방법 관리와 bridge 하세요.",
+    "Separate API impurity from DP degradant and qualify risk.": "API 불순물과 완제 분해산물을 분리하고 리스크를 qualification 하세요.",
+    "Check whether API storage supports DP manufacturing timeline.": "API 보관 조건이 완제 제조 일정을 지지하는지 확인하세요.",
+    "Supports applicant right of reference and CTD 3.2.S cross-reference": "신청자의 참조권 및 CTD 3.2.S cross-reference를 지지",
+    "Defines the drug substance used in formula, assay basis, and clinical material bridge": "조성, 함량 기준, 임상시험용 의약품 bridge에 사용되는 원료의약품을 정의",
+    "Affects starting material control, impurity risk, and post-change comparability planning": "출발물질 관리, 불순물 리스크, 변경 후 comparability 계획에 영향",
+    "Feeds DP related substances, stability trend, ICH M7/Q3B rationale": "완제 유연물질, 안정성 trend, ICH M7/Q3B 근거로 연결",
+    "Supports DP formula, assay correction, processability, release, and stability controls": "완제 조성, 함량 보정, 공정성, 방출, 안정성 관리를 지지",
+    "Supports manufacturing hold time, clinical material usage, and DP shelf-life strategy": "제조 hold time, 임상시험용 의약품 사용, 완제 사용기간 전략을 지지",
+    "API identity anchor for formula, assay, and DMF bridge": "조성, 함량, DMF bridge의 API 동일성 anchor",
+    "Supplier/change-control risk and API process impurity context": "공급자/변경관리 리스크 및 API 공정 불순물 맥락",
+    "Links API attributes to DP CQA, P.5.5, P.5.6, and P.8": "API 특성을 완제 CQA, P.5.5, P.5.6, P.8과 연결",
+    "Supports API-to-DP bridge, assay basis, impurity limits, and processability": "API-to-DP bridge, 함량 기준, 불순물 기준, 공정성을 지지",
+    "Connects early CMC decisions to clinical material and final product design": "초기 CMC 의사결정을 임상시험용 의약품 및 최종 제품 설계와 연결",
+    "Supports manufacturability, clinical batch representativeness, and change-risk control": "제조가능성, 임상 배치 대표성, 변경 리스크 관리를 지지",
+    "Main reviewer-facing control strategy and acceptance-criterion rationale": "심사자에게 직접 보이는 핵심 관리전략 및 허용기준 설정 근거",
+    "Supports release/stability criteria, impurity limits, storage, and clinical/commercial bridge": "출하/안정성 기준, 불순물 기준, 보관, 임상/상업 bridge를 지지",
+    "Flags whether CMC changes may require bridging, additional justification, or expert review": "CMC 변경이 bridging, 추가 설명, 전문가 검토를 요구할 수 있는지 표시",
+    "Confirm API form and grade against clinical/commercial material.": "임상/상업 material 기준으로 API form과 grade를 확인하세요.",
+    "Request current DMF version, LoA, site, and change notification basis.": "현재 DMF 버전, LoA, 제조소, 변경 통지 근거를 요청하세요.",
+    "Map API impurities, water, PSD, and polymorph to DP control strategy.": "API 불순물, 수분, PSD, 결정형을 완제 관리전략에 mapping 하세요.",
+    "Compare API criteria against DP CQA and validation calculations.": "API 기준을 완제 CQA 및 밸리데이션 계산과 비교하세요.",
+    "Complete specification rationale, validation gate, calculation check, and batch/stability linkage.": "기준설정 근거, 밸리데이션 gate, 계산 검토, 배치/안정성 연결성을 완료하세요.",
+    "Add trend table, release-profile drift review, degradation risk, and commitment plan.": "Trend table, 방출 profile drift 검토, 분해 리스크, commitment plan을 추가하세요.",
+}
+
+
+KO_TO_CONTENT: dict[str, str] = {value: key for key, value in CONTENT_KO.items()}
+BODY_TRANSLATION_COLUMNS = {
+    "Intake area",
+    "Expected client document",
+    "Consultant check",
+    "Client question",
+    "CTD update direction",
+    "Core question",
+    "Source document",
+    "Next action",
+    "Test item",
+    "Acceptance criterion",
+    "Method",
+    "Rationale basis",
+    "Linked CQA",
+    "Reviewer question",
+    "DMF element",
+    "API / supplier evidence",
+    "DP impact",
+    "Action",
+    "Expected information",
+    "Confirmed value",
+    "Evidence use",
+    "DP linkage",
+    "Review stage",
+    "Input document",
+    "What to capture",
+    "Where to apply",
+    "Decision point",
+    "Why it matters",
+    "CMC risk if unclear",
+    "Output artifact",
+    "Source area",
+    "Key point",
+    "Evidence required",
+    "Affected CTD",
+    "Suggested action",
+    "Evidence impact",
+    "Risk question",
+    "Question",
+    "Triggered by",
+    "Evidence needed",
+    "CTD update",
+    "Role",
+    "Purpose",
+}
+
+
 PROFILE_COPY_KO: dict[str, dict[str, str]] = {
     "assay": {
         "purpose": "API 역가/수분 보정, 표시량, 100% 기준농도의 연결성을 확인합니다.",
@@ -1879,11 +2034,48 @@ def option_labels(options: list[str], lang: str) -> list[str]:
     return [str(localize_value(option, lang)) for option in options]
 
 
+def localize_content_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    if value in CONTENT_KO:
+        return CONTENT_KO[value]
+    if value.startswith("Please provide source text and confirmed value for ") and value.endswith("."):
+        target = value.removeprefix("Please provide source text and confirmed value for ").removesuffix(".")
+        return f"{target}에 대한 원문 발췌와 확인값을 제공/확인하세요."
+    if value.startswith("Please provide source evidence and confirmed value for ") and value.endswith("."):
+        target = value.removeprefix("Please provide source evidence and confirmed value for ").removesuffix(".")
+        return f"{target}에 대한 원문 근거와 확인값을 제공/확인하세요."
+    if value.startswith("Please justify missing or incomplete evidence for ") and value.endswith("."):
+        target = value.removeprefix("Please justify missing or incomplete evidence for ").removesuffix(".")
+        return f"{target}의 누락 또는 불완전 근거를 설명하세요."
+    if value.startswith("Please justify the acceptance criterion for ") and value.endswith("."):
+        target = value.removeprefix("Please justify the acceptance criterion for ").removesuffix(".")
+        return f"{target} 허용기준의 설정 근거를 설명하세요."
+    if value.startswith("Please explain how ") and value.endswith(" supports the drug product control strategy."):
+        target = value.removeprefix("Please explain how ").removesuffix(" supports the drug product control strategy.")
+        return f"{target}가 완제 관리전략을 어떻게 지지하는지 설명하세요."
+    if value.startswith("Please provide raw data and sample-preparation rationale for ") and value.endswith("."):
+        target = value.removeprefix("Please provide raw data and sample-preparation rationale for ").removesuffix(".")
+        return f"{target}에 대한 raw data와 시료 제조 근거를 제공하세요."
+    if value.startswith("Client intake: "):
+        return value.replace("Client intake:", "고객 문서 접수:").replace("High risk", "고위험").replace("Medium risk", "중간 리스크").replace("Low risk", "낮은 리스크")
+    if value.startswith("DMF source input: "):
+        return value.replace("DMF source input:", "DMF 원문 입력:").replace("High risk", "고위험").replace("Medium risk", "중간 리스크").replace("Low risk", "낮은 리스크")
+    if value.startswith("CTD document input: "):
+        return value.replace("CTD document input:", "CTD 문서 입력:").replace("High risk", "고위험").replace("Medium risk", "중간 리스크").replace("Low risk", "낮은 리스크")
+    if value.startswith("Validation gate review: "):
+        return value.replace("Validation gate review:", "밸리데이션 Gate 검토:").replace("rule", "판정 규칙")
+    return value
+
+
 def localize_dataframe(df: pd.DataFrame, lang: str) -> pd.DataFrame:
     if lang != "ko":
         return df.copy()
     localized = df.copy()
     localized = localized.replace(VALUE_KO)
+    for column in BODY_TRANSLATION_COLUMNS:
+        if column in localized.columns:
+            localized[column] = localized[column].map(localize_content_value)
     localized = localized.rename(columns=COLUMN_KO)
     return localized
 
@@ -1893,6 +2085,11 @@ def delocalize_dataframe(df: pd.DataFrame, lang: str) -> pd.DataFrame:
         return df.copy()
     internal = df.copy()
     internal = internal.rename(columns=KO_TO_COLUMN)
+    for column in BODY_TRANSLATION_COLUMNS:
+        if column in internal.columns:
+            internal[column] = internal[column].map(
+                lambda value: KO_TO_CONTENT.get(value, value) if isinstance(value, str) else value
+            )
     internal = internal.replace(KO_TO_VALUE)
     return internal
 
@@ -4479,6 +4676,54 @@ def markdown_table(df: pd.DataFrame, columns: list[str]) -> str:
     return "\n".join([header, separator, *body]) + "\n"
 
 
+def localize_markdown_packet(packet: str, lang: str) -> str:
+    if lang != "ko":
+        return packet
+    replacements = {
+        "# ToxiGuard Platform Ver.3 CMC RA Decision Packet": "# ToxiGuard Platform Ver.3 CMC RA 판단 패킷",
+        "Generated:": "생성일:",
+        "## Product Context": "## 제품 개요",
+        "## Decision Gate": "## 판단 Gate",
+        "## Product-Profile-Driven Questions": "## 제품 프로필 기반 검토 질문",
+        "## Document Application Logic": "## 문서 적용 로직",
+        "## Key Decision Points": "## 핵심 판단 포인트",
+        "## Client CTD Intake Snapshot": "## 고객 CTD 접수 Snapshot",
+        "## High-Risk DMF Source Inputs": "## 고위험 DMF 원문 입력",
+        "## High-Risk CTD Source Inputs": "## 고위험 CTD 원문 입력",
+        "## Long Source-Document Notes": "## 긴 원문 메모",
+        "## High-Risk CTD Evidence": "## 고위험 CTD 근거",
+        "## High-Risk Specification Rationale": "## 고위험 기준설정 근거",
+        "## High-Risk DMF-to-DP Bridge": "## 고위험 DMF-to-DP Bridge",
+        "## Calculation / Validation Snapshot": "## 계산 / 밸리데이션 Snapshot",
+        "## Response Memo Seed": "## RA 답변 메모 Seed",
+        "## Expert Review Boundary": "## 전문가 검토 한계",
+        "## ICH Q14 Analytical Procedure Development Check": "## ICH Q14 분석법 개발 검토",
+        "## Test-Specific Validation Summary": "## 시험항목별 밸리데이션 요약",
+        "### Related Substance PDE/TDI Basis": "### 유연물질 PDE/TDI 근거",
+        "### ICH Q3D Elemental Impurity Scope": "### ICH Q3D 금속불순물 범위",
+        "### Validation Items Needing Review": "### 검토가 필요한 밸리데이션 항목",
+        "| Profile signal | Evidence impact | CTD section | Risk question |": "| 제품 프로필 신호 | 근거 영향 | CTD 항목 | 리스크 질문 |",
+        "| Review stage | Input document | What to capture | Where to apply | Decision point | CMC risk if unclear | Output artifact | Status | Risk | Action |": "| 검토 단계 | 입력 문서 | 확인할 정보 | 적용 위치 | 판단 포인트 | 불명확할 때의 CMC 리스크 | 산출물 | 상태 | 리스크 | 조치 |",
+        "| Priority | Source area | Source item | Key point | Why it matters | Evidence required | Affected CTD | Suggested action | User decision |": "| 우선순위 | 근거 영역 | 근거 항목 | 핵심 포인트 | 중요한 이유 | 필요 근거 | 영향 CTD | 제안 조치 | 사용자 판단 |",
+        "| DMF section | Expected information | Document source | Confirmed value | DP linkage | Action |": "| DMF 항목 | 필요 정보 | 문서 출처 | 확인값 | 완제 연결성 | 조치 |",
+        "| CTD module | CTD part | Expected information | Confirmed value | Evidence use | Next action |": "| CTD 모듈 | CTD 파트 | 필요 정보 | 확인값 | 근거 활용 | 다음 조치 |",
+        "| CTD module | CTD section | Status | Owner | Next action |": "| CTD 모듈 | CTD 항목 | 상태 | 담당 | 다음 조치 |",
+        "| Test item | Acceptance criterion | Rationale basis | Reviewer question |": "| 시험항목 | 기준 | 설정 근거 | 심사자 질문 |",
+        "| DMF element | DP impact | Action |": "| DMF 요소 | 완제 영향 | 조치 |",
+        "| Question | Triggered by | Evidence needed | CTD update | Owner |": "| 질문 | 발생 원인 | 필요 근거 | CTD 수정 | 담당 |",
+        "No high-risk item currently listed.": "현재 표시할 고위험 항목은 없습니다.",
+        "No long source-document excerpt has been entered yet.": "아직 긴 원문 발췌가 입력되지 않았습니다.",
+        "This packet is a decision-support draft. It does not replace CMC, analytical, regulatory, toxicology, clinical, legal, or quality expert review.": "이 패킷은 의사결정 보조 초안입니다. CMC, 분석, 규제, 독성, 임상, 법무 또는 품질 전문가 검토를 대체하지 않습니다.",
+    }
+    translated = packet
+    for source, target in {**CONTENT_KO, **replacements}.items():
+        translated = translated.replace(source, target)
+    for source, target in VALUE_KO.items():
+        translated = translated.replace(f"| {source} |", f"| {target} |")
+        translated = translated.replace(f": **{source}**", f": **{target}**")
+    return translated
+
+
 def markdown_document_notes() -> str:
     notes = st.session_state.get("document_notes", {})
     if not isinstance(notes, dict) or not any(str(value).strip() for value in notes.values()):
@@ -4653,7 +4898,7 @@ def render_response(lang: str, profile: dict[str, Any]) -> None:
     section_header(tr(lang, "response"), tr(lang, "response_help"), "file_pen", "green")
     rows = response_rows()
     st.dataframe(display_dataframe(rows, lang), width="stretch", hide_index=True)
-    packet = build_decision_packet(profile)
+    packet = localize_markdown_packet(build_decision_packet(profile), lang)
     mini_heading(tr(lang, "packet_preview"), "file_pen", "green")
     st.text_area(tr(lang, "markdown_preview"), value=packet, height=360)
     st.download_button(
