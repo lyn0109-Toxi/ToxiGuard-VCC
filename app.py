@@ -54,6 +54,7 @@ TEXT: dict[str, dict[str, str]] = {
         "client_questions": "고객 질문 리스트",
         "ctd_update_direction": "CTD 업데이트 방향",
         "enter_workbench": "워크벤치 시작",
+        "landing_enter_note": "이미지 또는 버튼을 클릭해 앱으로 이동",
         "selected": "선택됨",
         "open_review": "검토 열기",
         "live": "사용 가능",
@@ -154,6 +155,7 @@ TEXT: dict[str, dict[str, str]] = {
         "client_questions": "Client Question List",
         "ctd_update_direction": "CTD Update Direction",
         "enter_workbench": "Enter Workbench",
+        "landing_enter_note": "Click the image or button to enter the app",
         "selected": "Selected",
         "open_review": "Open review",
         "live": "Live",
@@ -2719,8 +2721,10 @@ def query_value(name: str, default: str = "") -> str:
 
 
 def requested_language_key() -> str:
-    value = query_value("lang", str(st.session_state.get("lang", "ko"))).lower()
-    return "en" if value in {"en", "eng", "english"} else "ko"
+    value = query_value("lang", str(st.session_state.get("lang", "en"))).lower()
+    if value in {"ko", "kor", "korean", "한국어"}:
+        return "ko"
+    return "en"
 
 
 def page_href(page_key: str, lang: str) -> str:
@@ -2745,6 +2749,7 @@ def should_show_landing() -> bool:
 
 
 def render_landing() -> None:
+    lang = requested_language_key()
     image_src = platform_image_data_uri()
     image_markup = (
         f'<img src="{image_src}" alt="ToxiGuard Platform CMC RA Evidence Workbench" />'
@@ -2857,21 +2862,21 @@ def render_landing() -> None:
           }}
         </style>
         <div class="tg-landing">
-          <a class="tg-landing-link" href="?enter=1&lang=ko" target="_self" aria-label="Enter ToxiGuard-VCC workbench">
+          <a class="tg-landing-link" href="?enter=1&lang={lang}" target="_self" aria-label="Enter ToxiGuard-VCC workbench">
             {image_markup}
             <span class="tg-enter-panel">
-              <span class="tg-enter-button">워크벤치 시작</span>
-              <span class="tg-enter-note">이미지 또는 버튼을 클릭해 앱으로 이동</span>
+              <span class="tg-enter-button">{escape(tr(lang, "enter_workbench"))}</span>
+              <span class="tg-enter-note">{escape(tr(lang, "landing_enter_note"))}</span>
             </span>
           </a>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    if st.button(tr("ko", "enter_workbench"), key="landing_enter_button", type="primary"):
+    if st.button(tr(lang, "enter_workbench"), key="landing_enter_button", type="primary"):
         st.session_state.entered_app = True
         st.query_params["enter"] = "1"
-        st.query_params["lang"] = "ko"
+        st.query_params["lang"] = lang
         st.rerun()
 
 

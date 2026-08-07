@@ -38,6 +38,7 @@ def run_page(page_key: str, expected_text: list[str]) -> str:
     page = AppTest.from_file(str(APP))
     page.session_state["entered_app"] = True
     page.query_params["page"] = page_key
+    page.query_params["lang"] = "ko"
     page.run(timeout=30)
     if page.exception:
         raise AssertionError(page.exception)
@@ -84,11 +85,21 @@ def main() -> None:
     landing.run(timeout=30)
     if landing.exception:
         raise AssertionError(landing.exception)
-    if not landing.button or landing.button[0].label not in {"워크벤치 시작", "Enter Workbench"}:
-        raise AssertionError("Landing entry button did not render")
+    if not landing.button or landing.button[0].label != "Enter Workbench":
+        raise AssertionError("Landing entry button did not default to English")
+
+    english_start = AppTest.from_file(str(APP))
+    english_start.session_state["entered_app"] = True
+    english_start.run(timeout=30)
+    if english_start.exception:
+        raise AssertionError(english_start.exception)
+    english_markup = "\n".join(getattr(item, "value", "") for item in english_start.markdown)
+    if "Client CTD Intake" not in english_markup or "00 Document Input" not in english_markup:
+        raise AssertionError("Workbench did not default to English after entry")
 
     test = AppTest.from_file(str(APP))
     test.session_state["entered_app"] = True
+    test.query_params["lang"] = "ko"
     test.run(timeout=30)
     if test.exception:
         raise AssertionError(test.exception)
@@ -136,6 +147,7 @@ def main() -> None:
     validation_page.session_state["entered_app"] = True
     validation_page.session_state["validation_test_item"] = "elemental_impurities"
     validation_page.query_params["page"] = "validation"
+    validation_page.query_params["lang"] = "ko"
     validation_page.run(timeout=30)
     if validation_page.exception:
         raise AssertionError(validation_page.exception)
@@ -170,6 +182,7 @@ def main() -> None:
     related_page.session_state["entered_app"] = True
     related_page.session_state["validation_test_item"] = "related_substances"
     related_page.query_params["page"] = "validation"
+    related_page.query_params["lang"] = "ko"
     related_page.run(timeout=30)
     if related_page.exception:
         raise AssertionError(related_page.exception)
