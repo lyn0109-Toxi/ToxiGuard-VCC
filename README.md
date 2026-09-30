@@ -94,3 +94,46 @@ The model and source snapshot match NORA. Configure `NORA_APP_URL` for a local
 paired preview; the default public return link needs the corresponding NORA
 update. Run `python scripts/validate_telmisartan.py` in addition to the existing
 checks. Inputs remain session-scoped; export the memo or JSON before leaving.
+
+## Customer DMF / CTD file receipt
+
+Open **자료 입력 → 섹션별 파일 접수** (or the same tab in source-document
+input). Select a section and register one or more PDF, DOCX, XLSX, TXT, DOC or
+XLS files. A combined document can be explicitly linked to several sections.
+The inventory covers DMF administrative access and S.1–S.7; CTD 1, 2,
+3.2.S.1–S.7, 3.2.P.1–P.8, 4 and 5. This supported catalog is not a complete
+submission checklist or a determination of applicability. CTD section names
+follow the [ICH CTD organization](https://admin.ich.org/page/ctd) and
+[M4Q quality sections](https://database.ich.org/sites/default/files/M4Q_Q%26As_R1_Q%26As.pdf).
+
+Sections with no registered file display **정보없음**. File receipt starts as
+**검토대기** and does not establish content review, Ready/Verified evidence,
+guideline compliance or validation completion. Existing examples, source
+excerpts, calculation inputs and review tables remain separate. Registering,
+reassigning or removing a file never calls the evidence-application action.
+
+**추가자료 요청** automatically lists missing sections and allows a reviewer to
+add clarification requests, owners, due dates and priorities. Marking a section
+**해당없음** requires an explanation in the UI and removes it from requests.
+Download the CSV request list or customer request document; the combined review
+memo also contains the actual file inventory and requests. No messages are sent
+to customers automatically.
+
+Files are held only in the current Streamlit session on the VCC server, with no
+application disk write, shared cache or external extraction service. They may
+be lost on refresh, disconnect or restart. Keep original documents separately;
+request exports and the review memo do not contain the original files. Limits
+are 20 MiB per file, 100 MiB and 50 unique files per session. Signature/container
+checks are format checks, not malware scanning or document-content validation.
+Identical bytes are stored once and their section links are combined.
+
+Run the existing checks plus:
+
+```bash
+python scripts/validate_document_intake.py
+python scripts/validate_document_upload_ui.py
+```
+
+These use synthetic documents to check receipt/request transitions, file
+limits, CSV escaping, section reassignment/removal, atomic batch registration,
+language/page persistence and isolation from existing review data.

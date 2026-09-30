@@ -1993,6 +1993,8 @@ def validation_summary_frame() -> pd.DataFrame:
 
 
 def initialize_state() -> None:
+    from document_intake_ui import get_state as initialize_customer_documents
+    initialize_customer_documents()
     # Keep calculation controls when their page or test item is temporarily hidden.
     # Data editors already save their values in the durable frames below.
     retained_inputs = {"related_mdd_mg_day", "related_impurity_pde_ug_day", "related_sample_conc_mg_ml",
@@ -3680,6 +3682,16 @@ def render_intake_flow() -> None:
 
 
 def render_client_intake(lang: str, profile: dict[str, Any]) -> None:
+    from document_intake_ui import render_workspace
+    section_header(tr(lang, "client_intake"),
+                   "DMF·CTD 파일을 섹션별로 등록하고, 누락 자료와 고객에게 요청할 내용을 정리하세요." if lang == "ko"
+                   else "Register DMF / CTD files by section and organize missing documents and customer requests.",
+                   "clipboard_check", "teal")
+    render_workspace(lang, profile, lambda: render_client_intake_review(lang, profile),
+                     "기존 접수·위험 검토" if lang == "ko" else "Existing intake and risk review")
+
+
+def render_client_intake_review(lang: str, profile: dict[str, Any]) -> None:
     section_header(tr(lang, "client_intake"), tr(lang, "client_intake_help"), "clipboard_check", "teal")
     st.button("원문·확인값 입력 열기" if lang == "ko" else "Open source excerpts and confirmed values",
               key="open_document_sources", on_click=go_to_page, args=("documents",))
@@ -3748,6 +3760,13 @@ def render_client_intake(lang: str, profile: dict[str, Any]) -> None:
 
 
 def render_document_workspace(lang: str, profile: dict[str, Any]) -> None:
+    from document_intake_ui import render_workspace
+    section_header(tr(lang, "document_workspace"), tr(lang, "document_workspace_help"), "file_pen", "blue")
+    render_workspace(lang, profile, lambda: render_document_source_review(lang, profile),
+                     "원문·확인값 검토" if lang == "ko" else "Source and confirmed-value review")
+
+
+def render_document_source_review(lang: str, profile: dict[str, Any]) -> None:
     section_header(tr(lang, "document_workspace"), tr(lang, "document_workspace_help"), "file_pen", "blue")
 
     ctd_ready = score_document_inputs(st.session_state.ctd_document_df)
@@ -4689,6 +4708,8 @@ def format_report_diff(value: Any) -> str:
 
 
 def build_decision_packet(profile: dict[str, Any]) -> str:
+    from document_intake_ui import get_state as customer_documents, intake_report
+    customer_receipt = intake_report(customer_documents(), st.session_state.get("lang", "ko"))
     intake = st.session_state.intake_df
     evidence = st.session_state.evidence_df
     spec = st.session_state.spec_df
@@ -4725,6 +4746,8 @@ def build_decision_packet(profile: dict[str, Any]) -> str:
 > Readiness scores and review gates summarize inputs; they are not regulatory assessments or approval probabilities.
 
 Generated: {date.today().isoformat()}
+
+{customer_receipt}
 
 ## Product Context
 
@@ -4825,9 +4848,18 @@ This packet is a decision-support draft. It does not replace CMC, analytical, re
 
 def render_response(lang: str, profile: dict[str, Any]) -> None:
     section_header(tr(lang, "response"), tr(lang, "response_help"), "file_pen", "green")
+    from document_intake_ui import get_state as customer_documents, intake_report, render_requests
+    render_requests(lang, profile.get("product", ""), editable=False)
+    st.divider()
     rows = response_rows()
     st.dataframe(display_dataframe(rows, lang), width="stretch", hide_index=True)
-    packet = localize_markdown_packet(build_decision_packet(profile), lang)
+    # The receipt is already localized. Preserve customer filenames and request
+    # text verbatim while translating the surrounding generated review memo.
+    customer_receipt = intake_report(customer_documents(), lang)
+    packet = customer_receipt.join(
+        localize_markdown_packet(part, lang)
+        for part in build_decision_packet(profile).split(customer_receipt)
+    )
     mini_heading(tr(lang, "packet_preview"), "file_pen", "green")
     st.download_button(
         tr(lang, "download"),
@@ -4931,7 +4963,11 @@ def main() -> None:
         return
     render_icon_nav(lang, page_key)
     profile = render_sidebar(lang)
-    st.caption(COPY[lang]["sample_banner"])
+    if page_key in {"intake", "documents"}:
+        st.caption("제품 정보·기존 검토표는 예시로 시작합니다. 고객 파일 접수 현황에는 직접 등록한 자료만 표시됩니다."
+                   if lang == "ko" else "Product context and existing review tables start from examples. Customer file receipt shows only your registered documents.")
+    else:
+        st.caption(COPY[lang]["sample_banner"])
     render_guidance(page_key, lang)
     render_selected_page(page_key, lang, profile)
     if page_key != "response":

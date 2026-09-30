@@ -116,8 +116,8 @@ def render_landing(lang: str, go_to_page: Callable, language_selector: Callable)
 
 
 GUIDANCE = {
-    "intake": (("먼저, 받은 자료의 상태를 확인하세요.", "왼쪽 제품 정보를 수정한 뒤 아래 표에서 수신 상태·문서 품질·리스크를 검토하세요. 아래에서 고객 질문과 CTD 보완 방향을 확인할 수 있습니다."), ("Start with the documents you received.", "Edit the product context on the left, then review receipt status, document quality, and risk below. Client questions and CTD actions follow the table.")),
-    "documents": (("판단에 사용한 원문과 확인값을 기록하세요.", "DMF·CTD 자료의 출처와 발췌문을 입력한 뒤 ‘문서 입력값을 근거 맵에 적용’을 선택하세요."), ("Record the source behind each finding.", "Enter DMF / CTD references, excerpts, and confirmed values, then apply them to the evidence map.")),
+    "intake": (("받은 파일을 섹션에 연결하고, 누락된 자료를 요청하세요.", "DMF·CTD 파일을 등록하면 접수 현황이 갱신됩니다. ‘추가자료 요청’에서 고객에게 필요한 자료·담당자·기한을 정리하세요."), ("Link received files to sections and request missing documents.", "Register DMF / CTD files to update receipt. Use Information requests to organize needed documents, owners and due dates.")),
+    "documents": (("접수한 원문을 확인하고 판단 근거를 기록하세요.", "파일 접수·누락 현황을 확인한 뒤 ‘원문·확인값 검토’에서 발췌문과 확인값을 기록하고 근거 맵에 적용하세요."), ("Review the received sources and record the evidence.", "Check file receipt and missing sections, then record excerpts and confirmed values in Source and confirmed-value review before applying them to the evidence map.")),
     "dashboard": (("부족한 근거와 우선 확인할 질문을 정리하세요.", "준비도 숫자보다 미해결 항목과 필요한 근거를 먼저 확인하세요. 세부 검토 화면에서 원문·규격·원료 연결성을 검토할 수 있습니다."), ("Prioritize evidence gaps and questions.", "Review unresolved items and evidence requests alongside the scores. Use detailed views for sources, specifications, and API linkage.")),
     "evidence": (("각 CTD 항목을 근거·담당자·다음 행동에 연결하세요.", "출처를 확인한 항목만 상태를 갱신하고, 근거가 부족하면 필요한 자료와 담당자를 기록하세요."), ("Connect each CTD section to evidence and an owner.", "Update status after checking the source. Record the required evidence, owner, and next action for gaps.")),
     "spec": (("규격의 숫자에 설정 근거가 있는지 검토하세요.", "시험항목별 기준, 시험법, 근거 자료를 확인하고 보완할 질문을 기록하세요."), ("Check the evidence behind each specification.", "Review criteria, methods, and supporting evidence, then record unresolved questions.")),

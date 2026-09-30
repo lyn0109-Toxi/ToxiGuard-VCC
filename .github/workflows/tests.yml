@@ -16,3 +16,5 @@ jobs:
       - run: python scripts/validate_calculations.py
       - run: python scripts/validate_ver3.py
       - run: python scripts/validate_telmisartan.py
+      - run: python scripts/validate_document_intake.py
+      - run: python scripts/validate_document_upload_ui.py
