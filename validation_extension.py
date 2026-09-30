@@ -448,6 +448,9 @@ def _svg(body: str) -> str:
 
 
 def apply_validation_extension(app: Any) -> None:
+    # Streamlit reruns the entrypoint in the same imported app module.
+    if getattr(app, "_vcc_validation_extension_applied", False):
+        return
     app.APP_BUILD = APP_BUILD
     app.ICON_SVG.update(ICONS)
     app.TEXT["ko"]["calc_help"] = "ICH Q14 분석법 설정 문제점, 시료 제조 농도, 결과 gate를 시험항목별로 검토합니다."
@@ -1004,3 +1007,4 @@ def apply_validation_extension(app: Any) -> None:
     app.render_validation = render_validation
     app.response_rows = response_rows
     app.build_decision_packet = build_decision_packet
+    app._vcc_validation_extension_applied = True

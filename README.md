@@ -1,70 +1,51 @@
-# ToxiGuard Platform Ver.3
+# ToxiGuard VCC — Validation & CMC Review
 
-`ToxiGuard Platform Ver.3` is a Streamlit CMC RA Evidence Workbench for consultant-led DMF, CTD 3.2.S, and CTD 3.2.P review.
+VCC connects reference concentrations with actual sample preparation values and brings guideline-based validation checks together with CMC document review. Review calculations, adjust rules and acceptance limits, inspect document evidence, and download a combined review memo.
 
-It is isolated from the existing CTI, SOP Gate, Revenue, and static web apps.
+**입력:** 시료 제조값, 시험 결과, 검토 기준, 제품 정보, DMF·CTD 원문·확인값
 
-## Core Flow
+**결과:** 농도 계산, 밸리데이션 점검, 부족한 근거, 고객 질문, CTD 보완사항, 검토 메모
 
-1. `Client CTD Intake`
-2. `Document Input`
-3. `Dashboard`
-4. `3.2.S / 3.2.P Evidence Map`
-5. `P.5.6 Specification Rationale`
-6. `DMF-to-DP Bridge`
-7. `Calculation / Validation Review`
-8. `CMC RA Response Memo`
-9. `App Launcher`
+## Start with the review you need
 
-The consultant meeting workflow is:
+- **문서 검토 / Document review** — received documents, source excerpts, confirmed values, CTD evidence, P.5.6 rationale, and DMF linkage.
+- **계산·밸리데이션 / Calculation and validation** — preparation values, reference concentrations, editable rules and limits, Q14, Q3D, and related-substance PDE/TDI checks.
+- **검토 메모 / Review memo** — current inputs, calculations, guideline checks, client questions, and CTD actions in a downloadable memo.
 
-```text
-Document received -> Source text / confirmed value -> Key CMC decision point -> Gap/risk summary -> Client question list -> CTD update direction
-```
+The opening page gives document review and calculation/validation their own direct entry buttons, plus an output preview. Four workspace buttons provide document input, calculation/validation, document/evidence review, and the memo. All nine detailed screens remain available in the sidebar. Korean is the default; English remains available from the first screen and via `?lang=en`.
 
-## What Is Included
+## Examples and session behavior
 
-- Full-screen ToxiGuard Platform landing image that enters the app on click
-- Korean / English screen switch
-- Korean body localization for risk questions, insight prompts, document application logic, and Decision Packet preview
-- Product profile sidebar with API, DMF holder, formulation platform, clinical material, and target-region fields
-- Consultant-first `Client CTD Intake` screen
-- Editable `Document Input` workspace for DMF source text, CTD 3.2.S, CTD 3.2.P, and other CTD modules
-- Editable company document application logic that defines how raw material, DMF, formulation, process, specification, stability, clinical material, and regional documents are used in CMC judgement
-- Key Decision Points board that converts document gaps and high-risk inputs into user-reviewable CMC judgement prompts, affected CTD sections, evidence requirements, and suggested actions
-- Apply Document Inputs action that pushes edited DMF/CTD source inputs into the Evidence Map, DMF-to-DP Bridge, and P.5.6 rationale risk seed
-- Product-profile-driven review prompts reflected in Dashboard and Evidence Map
-- DMF / LoA, API potency and water, impurity bridge, DP manufacturing, specification, method validation, stability, and CCS intake checklist
-- Intake readiness score based on document receipt, usability, and risk
-- Client meeting summary generated from received CTD/DMF information
-- Client question list generated from intake gaps and high-risk areas
-- CTD update direction mapped to target CTD sections
-- 3.2.S and 3.2.P evidence maps with source, owner, risk, and next action
-- P.5.6 specification rationale table
-- DMF-to-DP bridge table
-- Test-specific validation review for assay, related substances, dissolution, elemental impurities, and nitrosamines
-- ICH Q14 analytical procedure development check for ATP, matrix definition, technology selection, calibration/range, critical parameters, robustness, control strategy, lifecycle change, and transfer comparability
-- ICH Q3D elemental impurity scope review with Core 7 (Class 1 + Class 2A) and Full 24 element modes
-- PDE/TDI-based limit calculation for related substances and elemental impurities using MDD, route, and ICH threshold logic
-- Sample preparation concentration check with actual weighing, stock volume, aliquot, final volume, and dilution factor by test item
-- LOD / LOQ as % of reference concentration
-- Linearity R2 and intercept risk warning
-- Test-specific validation result gate tables and overall review summary
-- ICH M14 safety-evidence note separated from analytical validation bases such as ICH Q2(R2), Q14, Q3D(R2), and M7(R2)
-- CMC RA Decision Packet preview with product profile, document application logic, key decision points, DMF/CTD source input snapshots, Client CTD Intake Snapshot, and Markdown download
-- App launcher for SOP Gate, CTI, Revenue, and ToxiGuard-MediLens medication safety modules
+This is an editable prototype **started from example data**, including the Naltrexone product profile, document statuses, specification values, and test results. It does not start an empty production project. Replace examples with project evidence before relying on the draft. Sample provenance is shown in the workspace and exported memo.
+
+Native navigation preserves the current session. Product context, saved source tables, calculation inputs, and review data survive page and language changes. The app does not provide a persistent project store: download the memo before refreshing or ending the session.
+
+Readiness scores and review gates are internal rule-based summaries of user inputs. They are not regulatory assessments, compliance certification, or approval probabilities. The app does not upload or automatically read PDF documents and does not generate AI conclusions.
+
+## Detailed review tools
+
+- Client CTD intake and product context
+- DMF / CTD source excerpts, confirmed values, and editable document application logic
+- CTD 3.2.S / 3.2.P evidence map
+- P.5.6 specification rationale and DMF-to-drug-product linkage
+- Sample preparation and validation checks by test item
+- Editable validation results, rules (`between`, `gte`, `lte`, `info`), and acceptance limits
+- Existing Q14 checklist status, related-substance PDE/TDI concentration application, and Q3D route / Core 7 / Full 24 / individual PDE checks
+- Client questions, CTD update directions, and downloadable review memo
+
+Calculation logic and regulatory reference tables are unchanged by this interface update. Native navigation replaces full-page links; Korean table headers have unique reverse mappings, and the validation extension is applied once per imported app module.
 
 ## Run Locally
 
 ```bash
-cd /Users/leeyoung-nam/Desktop/ToxiGuard/Github/ToxiGuard-Platform-Ver3
-bash run_streamlit.sh
+python3 -m pip install -r requirements.txt
+python3 -m streamlit run streamlit_app.py --server.port 8518
 ```
 
 Then open:
 
 ```text
-http://localhost:8507
+http://localhost:8518
 ```
 
 ## GitHub Target
@@ -86,10 +67,30 @@ streamlit_app.py
 ## Validate
 
 ```bash
-cd /Users/leeyoung-nam/Desktop/ToxiGuard/Github/ToxiGuard-Platform-Ver3
+python3 scripts/validate_calculations.py
 python3 scripts/validate_ver3.py
 ```
+
+The validation suite also exercises edited acceptance criteria and Q14 status, Q3D scope / route / dose / individual PDE, and PDE/TDI concentration application across page and test-item changes.
 
 ## Boundary
 
 This is a decision-support prototype. It does not replace expert CMC, regulatory, analytical, toxicology, clinical, legal, or quality review.
+
+## Telmisartan × NORA case study
+
+The landing page and detailed view selector include the isolated Telmisartan
+case (`?enter=1&page=case&case=telmisartan&strategy=dual`). Import a NORA case
+JSON to preserve edited commercial assumptions; the link alone opens defaults.
+The packet is size-limited, validated for strategy/period/region/currency, and
+recalculated rather than trusting embedded results.
+
+Document reviews start unverified and experimental results are blank. Editable
+preparation examples reuse `calculate_sample_prep`; result/limit examples reuse
+`evaluate_rule`. Preparation Pass does not establish method validation. Case
+records are separate from the existing project's profiles and tables.
+
+The model and source snapshot match NORA. Configure `NORA_APP_URL` for a local
+paired preview; the default public return link needs the corresponding NORA
+update. Run `python scripts/validate_telmisartan.py` in addition to the existing
+checks. Inputs remain session-scoped; export the memo or JSON before leaving.

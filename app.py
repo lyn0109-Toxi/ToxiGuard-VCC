@@ -18,20 +18,21 @@ APP_BUILD = "validation-item-review-2026-06-30"
 
 TEXT: dict[str, dict[str, str]] = {
     "ko": {
-        "page_title": "ToxiGuard Platform Ver.3",
-        "subtitle": "CMC RA Evidence Workbench",
-        "positioning": "CTD 3.2.P 근거, 기준설정, DMF 연결성, 계산/밸리데이션, RA 답변 메모를 하나의 판단 흐름으로 묶는 Streamlit 작업대입니다.",
+        "page_title": "ToxiGuard VCC · Validation & CMC Review",
+        "telmisartan_case": "Telmisartan · NORA 사례",
+        "subtitle": "농도 계산 · 밸리데이션 · CMC 문서 검토",
+        "positioning": "기준농도와 실제 제조값을 확인하고, 검토 기준을 조정하며 문서 근거와 CTD 보완사항을 함께 정리하세요.",
         "language": "Language / 언어",
         "product_profile": "제품 프로필",
         "client_intake": "고객 CTD 문서 접수",
-        "document_workspace": "00 문서 입력",
-        "dashboard": "대시보드",
-        "evidence_map": "01 근거 맵",
-        "spec_rationale": "02 P.5.6 기준 설정 근거",
-        "dmf_bridge": "03 DMF-완제 연결성",
-        "validation": "04 계산 / 밸리데이션",
-        "response": "05 RA 답변 메모",
-        "launcher": "앱 실행",
+        "document_workspace": "원문·확인값 입력",
+        "dashboard": "검토 요약",
+        "evidence_map": "CTD 근거 맵",
+        "spec_rationale": "규격 설정 근거 (P.5.6)",
+        "dmf_bridge": "원료·완제 연결성",
+        "validation": "계산·밸리데이션 검토",
+        "response": "검토 메모",
+        "launcher": "연결 도구",
         "readiness": "Evidence readiness",
         "open_risk": "미해결 고위험",
         "decision": "판단 게이트",
@@ -44,7 +45,7 @@ TEXT: dict[str, dict[str, str]] = {
         "dmf_help": "원료 DMF 정보가 완제 CQA, 규격, 안정성, 불순물 전략을 지지하는지 확인합니다.",
         "calc_help": "함량, 유연물질, 용출, 금속불순물, 니트로사민별 시료 제조와 결과 gate를 검토합니다.",
         "response_help": "앞 단계의 gap을 보완질문, 필요한 근거, CTD 수정 위치로 바꿉니다.",
-        "download": "Decision Packet 다운로드",
+        "download": "검토 메모 다운로드 (.md)",
         "sample_prep": "시험항목별 샘플 제조 농도 검토",
         "validation_gate": "시험항목별 밸리데이션 결과 Gate",
         "risk_notes": "자동 Risk Notes",
@@ -115,24 +116,25 @@ TEXT: dict[str, dict[str, str]] = {
         "validation_review_warning": "Decision Packet을 준비 상태로 보기 전에 검토가 필요한 밸리데이션 결과 항목이 있습니다.",
         "validation_review_success": "선택한 시험항목의 밸리데이션 결과 Gate가 통과 상태입니다.",
         "overall_validation_summary": "시험항목별 전체 Gate 요약",
-        "packet_preview": "CMC RA Decision Packet 미리보기",
+        "packet_preview": "검토 메모 미리보기",
         "markdown_preview": "Markdown 미리보기",
     },
     "en": {
-        "page_title": "ToxiGuard Platform Ver.3",
-        "subtitle": "CMC RA Evidence Workbench",
-        "positioning": "A Streamlit workbench that connects CTD 3.2.P evidence, specification rationale, DMF linkage, calculation/validation review, and CMC RA response writing.",
+        "page_title": "ToxiGuard VCC · Validation & CMC Review",
+        "telmisartan_case": "Telmisartan · NORA case",
+        "subtitle": "Concentration · Validation · CMC document review",
+        "positioning": "Check reference concentrations and actual preparations, adjust review criteria, and connect document evidence to CTD actions.",
         "language": "Language",
         "product_profile": "Product Profile",
         "client_intake": "Client CTD Intake",
-        "document_workspace": "00 Document Input",
-        "dashboard": "Dashboard",
-        "evidence_map": "01 Evidence Map",
-        "spec_rationale": "02 P.5.6 Rationale",
-        "dmf_bridge": "03 DMF Bridge",
-        "validation": "04 Calculation / Validation",
-        "response": "05 Response Memo",
-        "launcher": "App Launcher",
+        "document_workspace": "Document input",
+        "dashboard": "Review summary",
+        "evidence_map": "CTD evidence map",
+        "spec_rationale": "Specification rationale (P.5.6)",
+        "dmf_bridge": "API–drug product bridge",
+        "validation": "Calculation and validation",
+        "response": "Review memo",
+        "launcher": "Connected tools",
         "readiness": "Evidence readiness",
         "open_risk": "Open high risks",
         "decision": "Decision gate",
@@ -145,7 +147,7 @@ TEXT: dict[str, dict[str, str]] = {
         "dmf_help": "Check whether API DMF information supports DP CQA, specification, stability, and impurity strategy.",
         "calc_help": "Review sample preparation and result gates by assay, related substances, dissolution, elemental impurities, and nitrosamines.",
         "response_help": "Convert gaps into deficiency questions, needed evidence, and CTD update locations.",
-        "download": "Download Decision Packet",
+        "download": "Download review memo (.md)",
         "sample_prep": "Test-Specific Sample Preparation Review",
         "validation_gate": "Test-Specific Validation Result Gate",
         "risk_notes": "Automatic Risk Notes",
@@ -216,7 +218,7 @@ TEXT: dict[str, dict[str, str]] = {
         "validation_review_warning": "validation result item(s) need review before the Decision Packet is treated as ready.",
         "validation_review_success": "Validation result gate is passing for the selected test item.",
         "overall_validation_summary": "Overall validation item summary",
-        "packet_preview": "CMC RA Decision Packet Preview",
+        "packet_preview": "Review memo preview",
         "markdown_preview": "Markdown preview",
     },
 }
@@ -258,7 +260,7 @@ COLUMN_KO: dict[str, str] = {
     "Source area": "근거 영역",
     "Source item": "근거 항목",
     "Key point": "핵심 포인트",
-    "Evidence required": "필요 근거",
+    "Evidence required": "판단에 필요한 근거",
     "Affected CTD": "영향 CTD",
     "Suggested action": "제안 조치",
     "User decision": "사용자 판단",
@@ -268,7 +270,7 @@ COLUMN_KO: dict[str, str] = {
     "Owner": "담당",
     "Next action": "다음 조치",
     "Test item": "시험항목",
-    "Acceptance criterion": "기준",
+    "Acceptance criterion": "허용기준",
     "Method": "시험방법",
     "Validation status": "밸리데이션 상태",
     "Rationale basis": "설정 근거",
@@ -279,7 +281,7 @@ COLUMN_KO: dict[str, str] = {
     "DP impact": "완제 영향",
     "Applicant verification": "신청자 확인",
     "Action": "조치",
-    "Field": "항목",
+    "Field": "프로필 항목",
     "Value": "값",
     "Question": "질문",
     "Triggered by": "발생 원인",
@@ -625,6 +627,7 @@ MODULES = [
 
 
 NAV_ITEMS = [
+    {"key": "case", "label_key": "telmisartan_case", "description": "NORA linked case", "description_ko": "NORA 연계 사례", "icon": "clipboard_check", "tone": "teal"},
     {
         "key": "intake",
         "label_key": "client_intake",
@@ -1990,6 +1993,13 @@ def validation_summary_frame() -> pd.DataFrame:
 
 
 def initialize_state() -> None:
+    # Keep calculation controls when their page or test item is temporarily hidden.
+    # Data editors already save their values in the durable frames below.
+    retained_inputs = {"related_mdd_mg_day", "related_impurity_pde_ug_day", "related_sample_conc_mg_ml",
+                       "q3d_route", "q3d_daily_intake_g_day", "q3d_scope_mode", "tel_vcc_strategy"}
+    for key in list(st.session_state):
+        if key.startswith(("prep_", "linearity_", "ext_prep_", "ext_lod_")) or key in retained_inputs:
+            st.session_state[key] = st.session_state[key]
     defaults = {
         "intake_df": pd.DataFrame(default_intake_rows()),
         "evidence_df": pd.DataFrame(default_evidence_rows()),
@@ -2721,7 +2731,7 @@ def query_value(name: str, default: str = "") -> str:
 
 
 def requested_language_key() -> str:
-    value = query_value("lang", str(st.session_state.get("lang", "en"))).lower()
+    value = query_value("lang", str(st.session_state.get("lang", "ko"))).lower()
     if value in {"ko", "kor", "korean", "한국어"}:
         return "ko"
     return "en"
@@ -2735,8 +2745,35 @@ def page_href(page_key: str, lang: str) -> str:
 
 def current_page_key() -> str:
     allowed = {str(item["key"]) for item in NAV_ITEMS}
-    page = query_value("page", "intake").lower()
+    page = query_value("page", str(st.session_state.get("active_page", "intake"))).lower()
     return page if page in allowed else "intake"
+
+
+def go_to_page(page_key: str) -> None:
+    allowed = {str(item["key"]) for item in NAV_ITEMS}
+    page = page_key if page_key in allowed else "intake"
+    st.session_state.entered_app = True
+    st.session_state.active_page = page
+    st.session_state.detail_page_widget = page
+    st.query_params["enter"] = "1"
+    st.query_params["page"] = page
+    st.query_params["lang"] = st.session_state.get("lang", requested_language_key())
+
+
+def change_language() -> None:
+    st.session_state.lang = st.session_state.language_choice
+    st.query_params["lang"] = st.session_state.lang
+
+
+def render_language_selector(lang: str) -> None:
+    st.session_state.language_choice = lang
+    st.radio("Language / 언어", ["ko", "en"],
+             format_func=lambda value: "한국어" if value == "ko" else "English",
+             horizontal=True, key="language_choice", on_change=change_language)
+
+
+def select_detail_page() -> None:
+    go_to_page(st.session_state.detail_page_widget)
 
 
 def should_show_landing() -> bool:
@@ -2749,151 +2786,14 @@ def should_show_landing() -> bool:
 
 
 def render_landing() -> None:
+    from vcc_experience import render_landing as render_purpose_landing
     lang = requested_language_key()
-    image_src = platform_image_data_uri()
-    image_markup = (
-        f'<img src="{image_src}" alt="ToxiGuard Platform CMC RA Evidence Workbench" />'
-        if image_src
-        else '<div class="tg-fallback-title">ToxiGuard-VCC</div>'
-    )
-    st.markdown(
-        f"""
-        <style>
-          [data-testid="stHeader"],
-          [data-testid="stToolbar"],
-          [data-testid="stDecoration"] {{
-            display: none;
-          }}
-          .block-container {{
-            max-width: 100%;
-            padding: 0 !important;
-          }}
-          .tg-landing {{
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            overflow: hidden;
-            background: #071b3d;
-          }}
-          .tg-landing-link {{
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            cursor: pointer;
-            text-decoration: none;
-          }}
-          .tg-landing img {{
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            object-position: center center;
-            display: block;
-          }}
-          .tg-landing-link::after {{
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-              linear-gradient(180deg, rgba(7, 27, 61, 0.00) 48%, rgba(7, 27, 61, 0.38) 100%),
-              radial-gradient(circle at 50% 86%, rgba(8, 127, 134, 0.28), rgba(7, 27, 61, 0.00) 34%);
-            pointer-events: none;
-          }}
-          .tg-enter-panel {{
-            position: absolute;
-            left: 50%;
-            bottom: clamp(24px, 6vh, 68px);
-            transform: translateX(-50%);
-            z-index: 2;
-            width: min(520px, calc(100vw - 40px));
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-align: center;
-          }}
-          .tg-enter-button {{
-            min-height: 70px;
-            width: min(360px, 100%);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid rgba(255, 255, 255, 0.88);
-            border-radius: 8px;
-            padding: 14px 28px;
-            color: #ffffff;
-            background: rgba(7, 27, 61, 0.82);
-            box-shadow: 0 18px 44px rgba(7, 27, 61, 0.38);
-            font: 900 20px/1.15 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            backdrop-filter: blur(12px);
-            transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
-          }}
-          .tg-enter-button::after {{
-            content: ">";
-            margin-left: 14px;
-            font-size: 24px;
-            line-height: 1;
-          }}
-          .tg-enter-note {{
-            color: rgba(255, 255, 255, 0.9);
-            background: rgba(7, 27, 61, 0.54);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 999px;
-            padding: 7px 13px;
-            font: 750 13px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            backdrop-filter: blur(8px);
-          }}
-          .tg-landing-link:hover .tg-enter-button,
-          .tg-landing-link:focus-visible .tg-enter-button {{
-            transform: translateY(-2px);
-            background: rgba(8, 127, 134, 0.94);
-            border-color: #ffffff;
-          }}
-          .tg-landing-link:focus-visible {{
-            outline: 4px solid #89f1ee;
-            outline-offset: -8px;
-          }}
-          .tg-fallback-title {{
-            height: 100vh;
-            display: grid;
-            place-items: center;
-            color: white;
-            font: 800 48px/1.1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-          }}
-        </style>
-        <div class="tg-landing">
-          <a class="tg-landing-link" href="?enter=1&lang={lang}" target="_self" aria-label="Enter ToxiGuard-VCC workbench">
-            {image_markup}
-            <span class="tg-enter-panel">
-              <span class="tg-enter-button">{escape(tr(lang, "enter_workbench"))}</span>
-              <span class="tg-enter-note">{escape(tr(lang, "landing_enter_note"))}</span>
-            </span>
-          </a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    if st.button(tr(lang, "enter_workbench"), key="landing_enter_button", type="primary"):
-        st.session_state.entered_app = True
-        st.query_params["enter"] = "1"
-        st.query_params["lang"] = lang
-        st.rerun()
+    st.session_state.lang = lang
+    render_purpose_landing(lang, go_to_page, render_language_selector)
 
 
 def render_header(lang: str) -> None:
-    image_src = platform_image_data_uri()
-    background = (
-        f'background-image: linear-gradient(90deg, rgba(7, 27, 61, 0.88), rgba(7, 27, 61, 0.55)), url("{image_src}");'
-        if image_src
-        else "background: #071b3d;"
-    )
-    hero_pills = "".join(
-        f'<span class="tg-tone-{escape(str(module["tone"]))}">'
-        f'{svg_icon(str(module["icon"]))}'
-        f'{escape(str(module.get("title_ko" if lang == "ko" else "title", module["title"])).replace(" Review", ""))}'
-        f'</span>'
-        for module in MODULES
-    )
+    background = "background: #143642;"
     st.markdown(
         f"""
         <style>
@@ -2902,7 +2802,7 @@ def render_header(lang: str) -> None:
             padding-top: 28px;
           }}
           .tg-app-hero {{
-            min-height: 250px;
+            min-height: 132px;
             border-radius: 10px;
             overflow: hidden;
             background-size: cover;
@@ -2911,11 +2811,11 @@ def render_header(lang: str) -> None:
             margin-bottom: 22px;
           }}
           .tg-app-hero-inner {{
-            min-height: 250px;
+            min-height: 132px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 34px 38px;
+            padding: 23px 30px;
             color: #ffffff;
           }}
           .tg-eyebrow {{
@@ -2927,7 +2827,7 @@ def render_header(lang: str) -> None:
           }}
           .tg-app-hero h1 {{
             margin: 0 0 10px 0;
-            font-size: 2.25rem;
+            font-size: 1.6rem;
             line-height: 1.08;
             letter-spacing: 0;
           }}
@@ -3600,9 +3500,6 @@ def render_header(lang: str) -> None:
             <div class="tg-eyebrow">{escape(tr(lang, "subtitle"))}</div>
             <h1>ToxiGuard-VCC</h1>
             <p>{escape(tr(lang, "positioning"))}</p>
-            <div class="tg-hero-pills">
-              {hero_pills}
-            </div>
           </div>
         </section>
         """,
@@ -3610,39 +3507,51 @@ def render_header(lang: str) -> None:
     )
 
 
+PROFILE_DEFAULTS = {
+    "product": "Naltrexone PLGA depot injection",
+    "active_substance": "Naltrexone",
+    "api_supplier": "API supplier / DMF holder to confirm",
+    "dosage": "PLGA microsphere extended-release injection",
+    "formulation_platform": "PLGA long-acting microsphere",
+    "strength": "380 mg/vial", "route": "Intramuscular",
+    "clinical_material": "Clinical batch genealogy to confirm",
+    "reference": "Vivitrol 380 mg or target reference",
+    "target_regions": "US / Korea / EU strategy to confirm",
+    "stage": "Submission prep",
+}
+
+
+def remember_profile(field: str) -> None:
+    values = dict(st.session_state.get("profile_values", PROFILE_DEFAULTS))
+    values[field] = st.session_state["profile_" + field]
+    st.session_state.profile_values = values
+    st.session_state[field] = values[field]
+
+
 def render_sidebar(lang: str) -> dict[str, Any]:
     st.sidebar.header(tr(lang, "product_profile"))
-    product = st.sidebar.text_input(tr(lang, "product"), value="Naltrexone PLGA depot injection")
-    active_substance = st.sidebar.text_input(tr(lang, "active_substance"), value="Naltrexone")
-    api_supplier = st.sidebar.text_input(tr(lang, "api_supplier"), value="API supplier / DMF holder to confirm")
-    dosage = st.sidebar.text_input(tr(lang, "dosage_form"), value="PLGA microsphere extended-release injection")
-    formulation_platform = st.sidebar.text_input(tr(lang, "formulation_platform"), value="PLGA long-acting microsphere")
-    strength = st.sidebar.text_input(tr(lang, "strength"), value="380 mg/vial")
-    route = st.sidebar.text_input(tr(lang, "route"), value="Intramuscular")
-    clinical_material = st.sidebar.text_input(tr(lang, "clinical_material"), value="Clinical batch genealogy to confirm")
-    reference = st.sidebar.text_input(tr(lang, "reference"), value="Vivitrol 380 mg or target reference")
-    target_regions = st.sidebar.text_input(tr(lang, "target_regions"), value="US / Korea / EU strategy to confirm")
-    stage_options = ["Development", "Validation", "Submission prep", "Response", "Lifecycle change"]
-    stage_display = option_labels(stage_options, lang)
-    stage_label = st.sidebar.selectbox(tr(lang, "lifecycle_stage"), stage_display, index=2)
-    stage = str(delocalize_value(stage_label, lang))
+    st.sidebar.caption("예시 제품입니다. 검토할 제품의 정보로 수정하세요." if lang == "ko" else "Sample product. Replace these values with your product context.")
+    profile = dict(st.session_state.get("profile_values", PROFILE_DEFAULTS))
+    label_keys = {"dosage": "dosage_form", "stage": "lifecycle_stage"}
+    for field, default in PROFILE_DEFAULTS.items():
+        widget_key = "profile_" + field
+        # Durable data stays outside widget state when labels or pages change.
+        st.session_state[widget_key] = profile.get(field, default)
+        label = tr(lang, label_keys.get(field, field))
+        if field == "stage":
+            value = st.sidebar.selectbox(label,
+                ["Development", "Validation", "Submission prep", "Response", "Lifecycle change"],
+                format_func=lambda item: localize_value(item, lang),
+                key=widget_key, on_change=remember_profile, args=(field,))
+        else:
+            value = st.sidebar.text_input(label, key=widget_key, on_change=remember_profile, args=(field,))
+        profile[field] = value
+        st.session_state[field] = value
+    st.session_state.profile_values = profile
     st.sidebar.divider()
-    st.sidebar.caption(tr(lang, "github_target"))
-    st.sidebar.code("lyn0109-Toxi/ToxiGuard-VCC", language=None)
-    st.sidebar.caption(f"Build: {APP_BUILD}")
-    return {
-        "product": product,
-        "active_substance": active_substance,
-        "api_supplier": api_supplier,
-        "dosage": dosage,
-        "formulation_platform": formulation_platform,
-        "strength": strength,
-        "route": route,
-        "clinical_material": clinical_material,
-        "reference": reference,
-        "target_regions": target_regions,
-        "stage": stage,
-    }
+    st.sidebar.caption("예시에서 시작한 검토 초안" if lang == "ko" else "Review draft started from examples")
+    st.sidebar.caption("새로고침 전에 검토 메모를 내려받으세요." if lang == "ko" else "Download the review memo before refreshing.")
+    return profile
 
 
 def section_header(title: str, help_text: str, icon: str, tone: str) -> None:
@@ -3693,26 +3602,27 @@ def update_subset_frame(state_key: str, edited_subset: pd.DataFrame, filter_colu
 
 
 def render_icon_nav(lang: str, current_page: str) -> None:
-    items = []
-    for item in NAV_ITEMS:
-        key = str(item["key"])
-        label = tr(lang, str(item["label_key"]))
-        description = str(item.get("description_ko" if lang == "ko" else "description", item["description"]))
-        is_active = key == current_page
-        active_attr = ' aria-current="page"' if is_active else ""
-        state_markup = f'<span class="tg-nav-state">{escape(tr(lang, "selected"))}</span>' if is_active else '<span class="tg-nav-state" aria-hidden="true"></span>'
-        items.append(
-            f'<a class="tg-nav-item tg-tone-{escape(str(item["tone"]))}" href="{escape(page_href(key, lang))}" '
-            f'target="_self" aria-label="{escape(label)}"{active_attr}>'
-            f'<span class="tg-nav-icon">{svg_icon(str(item["icon"]))}</span>'
-            f'<span class="tg-nav-copy">'
-            f'<span class="tg-nav-label">{escape(label)}</span>'
-            f'<span class="tg-nav-desc">{escape(description)}</span>'
-            f'</span>'
-            f'{state_markup}'
-            f'</a>'
-        )
-    st.markdown(f'<nav class="tg-icon-nav" aria-label="ToxiGuard module menu">{"".join(items)}</nav>', unsafe_allow_html=True)
+    # Native callbacks rerun the app without opening a new Streamlit session.
+    steps = [
+        ("intake", "자료 입력", "Document input", {"intake", "documents"}),
+        ("validation", "계산·밸리데이션", "Calculation / validation", {"validation"}),
+        ("dashboard", "문서·근거 검토", "Document / evidence review", {"dashboard", "evidence", "spec", "dmf"}),
+        ("response", "검토 메모", "Review memo", {"response"}),
+    ]
+    for column, (page, ko, en, members) in zip(st.columns(len(steps)), steps):
+        column.button(ko if lang == "ko" else en, key="workflow_"+page,
+                      width="stretch", type="primary" if current_page in members else "secondary",
+                      on_click=go_to_page, args=(page,))
+    render_detail_nav(lang, current_page)
+
+
+def render_detail_nav(lang: str, current_page: str) -> None:
+    with st.sidebar:
+        st.session_state.detail_page_widget = current_page
+        labels = {str(item["key"]): tr(lang, str(item["label_key"])) for item in NAV_ITEMS}
+        st.selectbox("세부 검토 화면" if lang == "ko" else "Detailed review view",
+                     list(labels), format_func=labels.get, key="detail_page_widget",
+                     on_change=select_detail_page)
 
 
 def build_meeting_summary(profile: dict[str, Any]) -> str:
@@ -3771,7 +3681,13 @@ def render_intake_flow() -> None:
 
 def render_client_intake(lang: str, profile: dict[str, Any]) -> None:
     section_header(tr(lang, "client_intake"), tr(lang, "client_intake_help"), "clipboard_check", "teal")
-    render_intake_flow()
+    st.button("원문·확인값 입력 열기" if lang == "ko" else "Open source excerpts and confirmed values",
+              key="open_document_sources", on_click=go_to_page, args=("documents",))
+    with st.expander("검토 흐름 안내" if lang == "ko" else "Review workflow"):
+        render_intake_flow()
+    with st.expander("제품 정보 확인·수정" if lang == "ko" else "Review product context", expanded=False):
+        st.write(("현재 제품: " if lang == "ko" else "Current product: ") + profile["product"])
+        st.caption("왼쪽 사이드바에서 제품명·제형·대상 지역을 수정할 수 있습니다." if lang == "ko" else "Edit product, dosage form, and target regions in the left sidebar.")
 
     st.session_state.intake_df = delocalize_dataframe(
         st.data_editor(
@@ -3806,6 +3722,8 @@ def render_client_intake(lang: str, profile: dict[str, Any]) -> None:
     k3.metric(tr(lang, "open_risk"), high_count)
     k4.metric("Missing documents" if lang == "en" else "누락 문서", missing_count)
 
+    from vcc_experience import COPY
+    st.caption(COPY[lang]["score_note"])
     summary = build_meeting_summary(profile)
     mini_heading(tr(lang, "meeting_summary"), "clipboard_check", "teal")
     st.markdown(
@@ -4685,6 +4603,9 @@ def localize_markdown_packet(packet: str, lang: str) -> str:
     if lang != "ko":
         return packet
     replacements = {
+        "# ToxiGuard VCC — CMC RA Review Memo": "# ToxiGuard VCC — CMC RA 검토 메모",
+        "Review draft started from examples. Default product details, document statuses, and test values are examples. Replace them with project evidence and verify every source before relying on the draft.": "예시에서 시작한 검토 초안입니다. 기본 제품 정보·문서 상태·시험 수치는 예시이므로 실제 프로젝트 자료로 수정하고 모든 출처를 확인해야 합니다.",
+        "Readiness scores and review gates summarize inputs; they are not regulatory assessments or approval probabilities.": "준비도와 검토 상태는 입력값을 요약한 내부 점검 지표이며, 규제기관의 평가나 허가 가능성을 뜻하지 않습니다.",
         "# ToxiGuard Platform Ver.3 CMC RA Decision Packet": "# ToxiGuard Platform Ver.3 CMC RA 판단 패킷",
         "Generated:": "생성일:",
         "## Product Context": "## 제품 개요",
@@ -4798,7 +4719,10 @@ def build_decision_packet(profile: dict[str, Any]) -> str:
     high_ctd_documents = ctd_documents[ctd_documents["Risk"] == "High"]
     review_validation = validation[validation["Gate"] == "Review"]
 
-    return f"""# ToxiGuard Platform Ver.3 CMC RA Decision Packet
+    return f"""# ToxiGuard VCC — CMC RA Review Memo
+
+> Review draft started from examples. Default product details, document statuses, and test values are examples. Replace them with project evidence and verify every source before relying on the draft.
+> Readiness scores and review gates summarize inputs; they are not regulatory assessments or approval probabilities.
 
 Generated: {date.today().isoformat()}
 
@@ -4905,13 +4829,13 @@ def render_response(lang: str, profile: dict[str, Any]) -> None:
     st.dataframe(display_dataframe(rows, lang), width="stretch", hide_index=True)
     packet = localize_markdown_packet(build_decision_packet(profile), lang)
     mini_heading(tr(lang, "packet_preview"), "file_pen", "green")
-    st.text_area(tr(lang, "markdown_preview"), value=packet, height=360)
     st.download_button(
         tr(lang, "download"),
         data=packet,
         file_name="ToxiGuard_VCC_CMC_RA_Decision_Packet.md",
-        mime="text/markdown",
+        mime="text/markdown", type="primary",
     )
+    st.text_area(tr(lang, "markdown_preview"), value=packet, height=360)
 
 
 def render_launcher(lang: str) -> None:
@@ -4982,36 +4906,44 @@ def render_launcher(lang: str) -> None:
 
 
 def main() -> None:
-    st.set_page_config(
-        page_title="ToxiGuard Platform Ver.3",
-        page_icon="TG",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
+    from vcc_experience import COPY, STYLE, render_guidance
+    st.set_page_config(page_title="ToxiGuard VCC · Validation & CMC Review", page_icon="📋",
+                       layout="wide", initial_sidebar_state="auto")
     if should_show_landing():
         render_landing()
         return
 
     initialize_state()
-    requested_lang = requested_language_key()
-    if st.session_state.get("lang") != requested_lang:
-        st.session_state.lang = requested_lang
+    lang = requested_language_key()
+    st.session_state.lang = lang
     with st.sidebar:
-        lang_label = st.radio(
-            tr(st.session_state.lang, "language"),
-            ["한국어", "English"],
-            index=1 if st.session_state.lang == "en" else 0,
-            horizontal=True,
-        )
-        lang = "ko" if lang_label == "한국어" else "en"
-        st.session_state.lang = lang
-        if requested_language_key() != lang:
-            st.query_params["lang"] = lang
-    profile = render_sidebar(st.session_state.lang)
-    render_header(st.session_state.lang)
+        st.markdown("### ToxiGuard VCC")
+        render_language_selector(lang)
     page_key = current_page_key()
-    render_icon_nav(st.session_state.lang, page_key)
-    render_selected_page(page_key, st.session_state.lang, profile)
+    st.session_state.active_page = page_key
+    render_header(lang)
+    st.markdown(STYLE, unsafe_allow_html=True)
+    if page_key == "case":
+        render_detail_nav(lang, page_key)
+        from vcc_telmisartan import render as render_case
+        render_case(lang)
+        st.caption(COPY[lang]["session"])
+        return
+    render_icon_nav(lang, page_key)
+    profile = render_sidebar(lang)
+    st.caption(COPY[lang]["sample_banner"])
+    render_guidance(page_key, lang)
+    render_selected_page(page_key, lang, profile)
+    if page_key != "response":
+        st.divider()
+        if page_key == "intake":
+            next_page, next_label = "documents", ("다음: 원문·확인값 입력" if lang == "ko" else "Next: record source evidence")
+        elif page_key == "documents":
+            next_page, next_label = "dashboard", ("다음: 부족한 근거 검토" if lang == "ko" else "Next: review evidence gaps")
+        else:
+            next_page, next_label = "response", ("다음: 검토 메모 확인" if lang == "ko" else "Next: review the memo")
+        st.button(next_label, key="next_review_step", type="primary", on_click=go_to_page, args=(next_page,))
+    st.caption(COPY[lang]["session"])
 
 
 if __name__ == "__main__":
