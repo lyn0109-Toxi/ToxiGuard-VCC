@@ -85,6 +85,7 @@ TEXT: dict[str, dict[str, str]] = {
         "raw_document_paste": "긴 문서 발췌 / 원문 메모",
         "questions_to_ask": "미팅에서 확인할 질문",
         "product": "제품명",
+        "batch": "현재 적용 배치 / 검토 범위",
         "active_substance": "원료의약품 / 주성분",
         "api_supplier": "API 공급처 / DMF holder",
         "formulation_platform": "제형 기술 / 플랫폼",
@@ -187,6 +188,7 @@ TEXT: dict[str, dict[str, str]] = {
         "raw_document_paste": "Long source-document excerpt / note",
         "questions_to_ask": "Questions to ask in meeting",
         "product": "Product",
+        "batch": "Current batch / review scope",
         "active_substance": "Active substance / API",
         "api_supplier": "API supplier / DMF holder",
         "formulation_platform": "Formulation technology / platform",
@@ -347,6 +349,7 @@ VALUE_KO: dict[str, str] = {
     "Validation": "밸리데이션",
     "Submission prep": "허가자료 준비",
     "Response": "보완 답변",
+    "Final approval": "최종 승인",
     "Lifecycle change": "변경 관리",
     "Pass": "통과",
     "Review": "검토",
@@ -2733,7 +2736,7 @@ def query_value(name: str, default: str = "") -> str:
 
 
 def requested_language_key() -> str:
-    value = query_value("lang", str(st.session_state.get("lang", "ko"))).lower()
+    value = query_value("lang", str(st.session_state.get("lang", "en"))).lower()
     if value in {"ko", "kor", "korean", "한국어"}:
         return "ko"
     return "en"
@@ -3511,6 +3514,7 @@ def render_header(lang: str) -> None:
 
 PROFILE_DEFAULTS = {
     "product": "Naltrexone PLGA depot injection",
+    "batch": "",
     "active_substance": "Naltrexone",
     "api_supplier": "API supplier / DMF holder to confirm",
     "dosage": "PLGA microsphere extended-release injection",
@@ -3542,7 +3546,7 @@ def render_sidebar(lang: str) -> dict[str, Any]:
         label = tr(lang, label_keys.get(field, field))
         if field == "stage":
             value = st.sidebar.selectbox(label,
-                ["Development", "Validation", "Submission prep", "Response", "Lifecycle change"],
+                ["Development", "Validation", "Submission prep", "Response", "Final approval", "Lifecycle change"],
                 format_func=lambda item: localize_value(item, lang),
                 key=widget_key, on_change=remember_profile, args=(field,))
         else:
@@ -4820,7 +4824,7 @@ Generated: {date.today().isoformat()}
 
 - Last reviewed test item: {calc.get('test_item', 'Not run')}
 - Reference concentration: {format_report_number(calc.get('reference_conc', 'Not run'))} {calc.get('unit', '')}
-- Actual final concentration: {format_report_number(calc.get('final_conc', 'Not run'))} {calc.get('unit', '')}
+- Actual final concentration: {format_report_number(calc.get('final_conc', 'Not run'))} {calc.get('output_unit', calc.get('unit', ''))}
 - Target concentration: {format_report_number(calc.get('target_conc', 'Not run'))} {calc.get('unit', '')}
 - Actual vs target difference: {format_report_diff(calc.get('diff_pct', 'Not run'))}
 
@@ -4951,6 +4955,8 @@ def main() -> None:
     with st.sidebar:
         st.markdown("### ToxiGuard VCC")
         render_language_selector(lang)
+        from feedback import render_feedback
+        render_feedback(lang)
     page_key = current_page_key()
     st.session_state.active_page = page_key
     render_header(lang)

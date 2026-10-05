@@ -113,6 +113,8 @@ def render_landing(lang: str, go_to_page: Callable, language_selector: Callable)
     with st.expander(c["scope"]):
         st.write(c["scope_text"])
         st.caption(c["session"])
+    from feedback import render_feedback
+    render_feedback(lang)
 
 
 GUIDANCE = {

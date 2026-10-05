@@ -59,7 +59,20 @@ def assert_current_page(page: AppTest, expected: str) -> None:
 
 
 def assert_landing_and_entry() -> AppTest:
-    landing = AppTest.from_file(str(APP)).run(timeout=30)
+    default = AppTest.from_file(str(APP)).run(timeout=30)
+    assert_no_exception(default)
+    if default.radio(key="language_choice").value != "en":
+        raise AssertionError("A fresh landing must default to English")
+    if default.button(key="landing_enter_button").label != "Start document review":
+        raise AssertionError("Default landing must expose an English start action")
+    default.button(key="landing_enter_button").click().run(timeout=30)
+    assert_current_page(default, "intake")
+    if default.session_state["lang"] != "en":
+        raise AssertionError("Default English must persist into the workbench")
+
+    landing = AppTest.from_file(str(APP))
+    landing.query_params["lang"] = "ko"
+    landing.run(timeout=30)
     assert_no_exception(landing)
     text = collect_visible_text(landing)
     # Test that purpose and results are readable text, without tying the test to
@@ -73,14 +86,16 @@ def assert_landing_and_entry() -> AppTest:
     landing.button(key="landing_enter_button").click().run(timeout=30)
     assert_current_page(landing, "intake")
     if landing.session_state["lang"] != "ko":
-        raise AssertionError("A fresh workbench must default to Korean")
+        raise AssertionError("Entry must retain explicitly selected Korean")
     if "intake_editor" not in {getattr(item, "key", None) for item in landing.get("dataframe")}:
         # AppTest versions can expose data_editor as an unknown element. Its
         # registered state proves the intake editor has actually been rendered.
         if "intake_editor" not in landing.session_state:
             raise AssertionError("The primary start action did not open intake editing")
 
-    preview = AppTest.from_file(str(APP)).run(timeout=30)
+    preview = AppTest.from_file(str(APP))
+    preview.query_params["lang"] = "ko"
+    preview.run(timeout=30)
     preview.button(key="landing_preview_button").click().run(timeout=30)
     assert_current_page(preview, "response")
     if "검토 메모 미리보기" not in collect_visible_text(preview):

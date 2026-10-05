@@ -12,7 +12,7 @@ VCC connects reference concentrations with actual sample preparation values and 
 - **계산·밸리데이션 / Calculation and validation** — preparation values, reference concentrations, editable rules and limits, Q14, Q3D, and related-substance PDE/TDI checks.
 - **검토 메모 / Review memo** — current inputs, calculations, guideline checks, client questions, and CTD actions in a downloadable memo.
 
-The opening page gives document review and calculation/validation their own direct entry buttons, plus an output preview. Four workspace buttons provide document input, calculation/validation, document/evidence review, and the memo. All nine detailed screens remain available in the sidebar. Korean is the default; English remains available from the first screen and via `?lang=en`.
+The opening page gives document review and calculation/validation their own direct entry buttons, plus an output preview. Four workspace buttons provide document input, calculation/validation, document/evidence review, and the memo. All nine detailed screens remain available in the sidebar. English is the default; Korean remains available from the first screen and via `?lang=ko`.
 
 ## Examples and session behavior
 
@@ -20,7 +20,7 @@ This is an editable prototype **started from example data**, including the Naltr
 
 Native navigation preserves the current session. Product context, saved source tables, calculation inputs, and review data survive page and language changes. The app does not provide a persistent project store: download the memo before refreshing or ending the session.
 
-Readiness scores and review gates are internal rule-based summaries of user inputs. They are not regulatory assessments, compliance certification, or approval probabilities. The app does not upload or automatically read PDF documents and does not generate AI conclusions.
+Readiness scores and review gates are internal rule-based summaries of user inputs. They are not regulatory assessments, compliance certification, or approval probabilities. Uploaded PDF, DOCX, XLSX and TXT documents can be read locally to identify review-topic evidence; the app does not generate AI conclusions.
 
 ## Detailed review tools
 
@@ -47,6 +47,30 @@ Then open:
 ```text
 http://localhost:8518
 ```
+
+## Feedback via Google Forms
+
+The app includes the VCC feedback form as its default responder link:
+https://docs.google.com/forms/d/e/1FAIpQLSc5V5laQEjbhBbtV2rl4XtT2w61mW3Ng_Yo4lVlOLkIH8EbVQ/viewform?usp=publish-editor
+
+To use a different form, set `FEEDBACK_FORM_URL` to the HTTPS `forms.gle` or
+`docs.google.com/forms/.../viewform` URL. Use an environment variable or, on
+Streamlit Community Cloud, add the following to the app's Secrets settings:
+
+```toml
+FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform"
+```
+
+For local development, the same setting can go in the ignored
+`.streamlit/secrets.toml`. Restart the app after changing configuration.
+A feedback button appears on the landing page and the workspace sidebar,
+in Korean or English. It opens the form in a new tab; review data and uploaded
+files are not automatically sent to the form. With no override, the default
+VCC form is used; an invalid override hides the button. Google Forms stores responses; enable accepting responses there
+and verify its respondent access settings before sharing the app.
+
+Suggested questions: overall satisfaction (1–5), feature used, issue or
+improvement request, reproduction steps, and optional contact email.
 
 ## GitHub Target
 
@@ -137,3 +161,103 @@ python scripts/validate_document_upload_ui.py
 These use synthetic documents to check receipt/request transitions, file
 limits, CSV escaping, section reassignment/removal, atomic batch registration,
 language/page persistence and isolation from existing review data.
+
+## CTD document insights
+
+Register a document in **자료 입력 → 섹션별 파일 접수 / Files by section**,
+then open **문서 분석 / Document insights**. The selected file is analysed
+automatically. PDF text, DOCX paragraphs and table rows, XLSX stored cell values,
+and UTF-8/UTF-16 TXT are supported. Legacy DOC and XLS remain receipt-only.
+Excel formulas are not recalculated and external workbook links are not fetched.
+
+The review map shows explicitly labelled drug/product name candidates,
+CTD section codes, and a chart of source-text blocks containing keywords for
+identity/composition, manufacture, specifications, methods/validation,
+impurities, stability, packaging, nonclinical and clinical review. Select a
+topic to see its source excerpts and PDF page, DOCX table/row/cell or paragraph,
+XLSX sheet/cell, or TXT line location.
+Original excerpts are preserved across language changes. Download the extracted
+text and evidence map as JSON for further review.
+
+These are rule-based candidates, not verified values or a completeness score.
+Unlabelled drug names may not be detected; keywords may occur in headings,
+tables of contents or negated statements. No match does not prove a missing
+section. Extraction never updates product profiles, file-section assignments,
+review status, acceptance criteria or validation results.
+
+Scanned PDFs need OCR first; encrypted or damaged documents show an explanation.
+Processing is bounded to 120 PDF pages, 300,000 text characters, 2,000 blocks,
+and an 18-second worker timeout. Partial results are labelled. Parsing runs in
+a disposable local process with memory/CPU limits; documents are not sent to
+external AI services. Results are held only in the same session as uploaded
+files and cleared from the analysis cache when files are removed.
+
+```bash
+python scripts/validate_document_insights.py
+```
+
+## Source trace, versions and applicability
+
+In **Versions and source trace**, record the actual document/method version,
+source system (LIMS, QC RDM, DMF or supplier), source identifier, effective date,
+applicable product, batch scope, lifecycle stage and reviewer. Initial records
+are unconfirmed. Confirmation requires explicit source and scope metadata;
+current-product matching also needs the current batch and stage in the sidebar.
+Final approval is available as a lifecycle stage.
+
+Select two registered files and use **Compare versions** to see removed, added
+and replaced extracted text with source locations. The selected document is
+treated as the later version only by your choice. Version labels are not
+automatically sorted, and text comparison does not assess regulatory or
+manufacturing impact. Partial extraction and shortened displays are labelled;
+formatting, images, formula changes without stored-value changes and unextracted
+content need separate inspection.
+
+From **Document insights**, select a topic and link an excerpt to a review
+record. Record the checked value, confirmation status, change-impact note,
+CTD action location, additional information, owner and due date. Confirmed
+records require confirmed document applicability and an explicit reviewer.
+Changing document metadata or withdrawing document confirmation invalidates
+linked evidence confirmation, retaining the original version snapshot.
+Source-linked requests appear in Information requests and the review memo.
+Trace and diff records can be downloaded as JSON; memo exports preserve source
+wording. Removing a file clears its derived trace and comparison records.
+
+## Calculation basis and dosage-form review
+
+Calculation screens show the mass/volume units, stock and dilution steps,
+and correction formula. Use either one as-is purity/potency factor or a
+dry-basis purity factor multiplied by (1 − moisture fraction); water is never
+applied twice. Record CoA/method source, version, page/table/cell, applicable
+product/batch/method, reference/correction basis, recovery formula and whether
+the report states r or R². Sources start unconfirmed and edits require reviewer
+reconfirmation. Product, batch, API, dosage form, strength, route or stage changes
+also invalidate existing confirmation, even when switching directly to the memo;
+the prior calculation context and source record are retained for review.
+These records are included in the memo.
+
+Solution units such as mg/mL, ug/mL and ng/mL are converted for comparison.
+Product-mass units such as ug/g or ambiguous ppm require a separate conversion
+basis and stay Info rather than being treated as solution concentrations.
+The existing nitrosamine example now correctly reports about 30 ng/mL and Hold,
+instead of a mislabeled 0.03 ng/mL passing example. Numerical gates do not
+confirm source evidence.
+
+**Dosage-form checklist** offers oral nonsterile, injectable/sterile and other
+review scopes. A suggested template requires reviewer confirmation. The oral
+scope omits sterility, endotoxin and container-integrity prompts; form-specific
+applicability still needs review. Items start unconfirmed, reviewed entries need
+source and notes, and Not applicable needs a reason. Owner and due date are
+exported with the current product/batch checklist. Example evidence tables
+remain independent and are not converted into actual findings by this feature.
+
+```bash
+python scripts/validate_document_trace.py
+python scripts/validate_calculation_basis.py
+python scripts/validate_dosage_checklist.py
+```
+
+Files and review records are still session-scoped. These features do not add a
+persistent project database, company authentication or an approval of a public
+hosting environment for confidential company documents. Use company-approved
+processing and hosting settings before applying real company materials.

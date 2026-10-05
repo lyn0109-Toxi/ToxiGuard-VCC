@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from html import escape
+from math import isfinite
 from typing import Any
 
 import pandas as pd
@@ -11,6 +12,180 @@ APP_BUILD = "q14-method-risk-check-2026-07-01"
 
 
 Q14_STATUS_OPTIONS = ["Defined", "Partial", "Gap", "N/A"]
+
+CORRECTION_MODES = ("combined", "dry_purity_and_moisture")
+CORRELATION_BASES = ("Unconfirmed", "Reported R²", "Reported r; R² evidence needed")
+CALCULATION_INPUT_SUFFIXES = (
+    "ref", "unit", "level", "weighed", "purity", "stock", "aliquot", "final", "dilution",
+    "correction_mode", "moisture", "source_document", "source_version", "source_location",
+    "application_scope", "reference_basis", "correction_basis", "recovery_basis", "correlation_basis",
+)
+CALCULATION_PROFILE_FIELDS = ("product", "batch", "active_substance", "dosage", "strength", "route", "stage")
+
+
+def calculation_profile_context(profile: dict[str, Any]) -> dict[str, str]:
+    return {field: str(profile.get(field, "")) for field in CALCULATION_PROFILE_FIELDS}
+
+
+def invalidate_calculation_context(record: dict[str, Any], context: dict[str, str]) -> dict[str, Any]:
+    updated = dict(record)
+    updated["current_profile_context"] = dict(context)
+    if record.get("profile_context") != context:
+        updated["prior_profile_context"] = record.get("profile_context", {})
+        updated["evidence_status"] = "Unconfirmed"
+        updated["profile_context_status"] = "Unconfirmed: product/batch/profile changed since the recorded calculation"
+        updated["missing_evidence"] = list(dict.fromkeys([
+            *record.get("missing_evidence", []), "reviewer_reconfirmation_after_profile_change",
+        ]))
+    return updated
+
+
+def effective_correction_pct(purity_pct: float, moisture_pct: float = 0.0, mode: str = "combined") -> float:
+    """Use either a single as-is factor or dry-basis purity with moisture once."""
+    if mode not in CORRECTION_MODES:
+        raise ValueError("Select a supported correction basis")
+    if not isfinite(purity_pct) or purity_pct < 0:
+        raise ValueError("Purity / potency must be a finite, nonnegative percentage")
+    if mode == "combined":
+        # A CoA as-is potency may already incorporate water. A saved moisture
+        # value from the other mode must never apply a second correction.
+        return purity_pct
+    if not isfinite(moisture_pct) or not 0 <= moisture_pct <= 100:
+        raise ValueError("Moisture must be between 0 and 100 percent")
+    if purity_pct > 100:
+        raise ValueError("Dry-basis purity must not exceed 100 percent")
+    return purity_pct * (1.0 - moisture_pct / 100.0)
+
+
+def solution_unit_factor(unit: str) -> float | None:
+    """Return ug/mL per declared unit; mass-based/ambiguous units need evidence."""
+    normalized = unit.strip().replace("µ", "u").replace("μ", "u").replace(" ", "").lower()
+    return {"ug/ml": 1.0, "ng/ml": 0.001, "mg/ml": 1000.0}.get(normalized)
+
+
+def calculate_preparation_basis(
+    reference_conc: float,
+    level_pct: float,
+    weighed_mg: float,
+    purity_pct: float,
+    stock_volume_ml: float,
+    aliquot_ml: float,
+    final_volume_ml: float,
+    dilution_factor: float,
+    unit: str = "ug/mL",
+    correction_mode: str = "combined",
+    moisture_pct: float = 0.0,
+) -> dict[str, Any]:
+    """Wrap the existing formula with dimensional units and correction evidence."""
+    from app import calculate_sample_prep
+
+    numeric_inputs = (reference_conc, level_pct, weighed_mg, stock_volume_ml, aliquot_ml, final_volume_ml, dilution_factor)
+    if any(not isfinite(value) for value in numeric_inputs):
+        raise ValueError("Preparation inputs must be finite")
+    if min(reference_conc, level_pct, weighed_mg, aliquot_ml) < 0:
+        raise ValueError("Concentration, level, weighed amount, and aliquot must be nonnegative")
+    if min(stock_volume_ml, final_volume_ml, dilution_factor) <= 0:
+        raise ValueError("Volumes and additional dilution factor must be positive")
+    correction = effective_correction_pct(purity_pct, moisture_pct, correction_mode)
+    factor = solution_unit_factor(unit)
+    canonical_reference = reference_conc * factor if factor is not None else reference_conc
+    calculated = dict(calculate_sample_prep(
+        canonical_reference, level_pct, weighed_mg, correction,
+        stock_volume_ml, aliquot_ml, final_volume_ml, dilution_factor,
+    ))
+    solution_stock = float(calculated["stock_conc"])
+    solution_final = float(calculated["final_conc"])
+    if factor is not None:
+        for key in ("stock_conc", "final_conc", "target_conc"):
+            calculated[key] = float(calculated[key]) / factor
+        output_unit = unit
+        unit_note = "Solution mass/volume units are converted through ug/mL."
+    else:
+        calculated.update({
+            "target_conc": reference_conc * level_pct / 100.0,
+            "diff_pct": None,
+            "gate": "Info",
+            "message": "Target comparison is unconfirmed: provide a supported solution unit or a product-mass/digestion conversion basis.",
+        })
+        output_unit = "ug/mL"
+        unit_note = "A solution in ug/mL cannot be compared directly with ug/g, unspecified ppm, or an unsupported unit. Record product mass, extraction/digestion volume, and dilution basis."
+    correction_formula = "P / 100" if correction_mode == "combined" else "(P / 100) × (1 − water / 100)"
+    calculated.update({
+        "reference_conc": reference_conc, "unit": unit, "output_unit": output_unit,
+        "unit_comparable": factor is not None, "unit_note": unit_note,
+        "solution_stock_ug_ml": solution_stock, "solution_final_ug_ml": solution_final,
+        "weighed_mg": weighed_mg, "purity_pct": purity_pct,
+        "moisture_pct": moisture_pct if correction_mode == "dry_purity_and_moisture" else None,
+        "correction_mode": correction_mode, "effective_correction_pct": correction,
+        "stock_volume_ml": stock_volume_ml, "aliquot_ml": aliquot_ml,
+        "final_volume_ml": final_volume_ml, "dilution_factor": dilution_factor, "level_pct": level_pct,
+        "formula": "C_stock [ug/mL] = mass [mg] × 1000 [ug/mg] × f / V_stock [mL]; C_final [ug/mL] = C_stock × V_aliquot [mL] / V_final [mL] / D_additional; f = " + correction_formula,
+        "dilution_steps": f"Stock {stock_volume_ml:g} mL → aliquot {aliquot_ml:g} mL / final {final_volume_ml:g} mL → additional dilution ÷ {dilution_factor:g}",
+    })
+    return calculated
+
+
+def calculation_evidence_status(record: dict[str, Any]) -> tuple[str, list[str]]:
+    required = ("source_document", "source_version", "source_location", "reference_basis", "correction_basis", "application_scope", "recovery_basis")
+    missing = [field for field in required if not str(record.get(field, "")).strip()]
+    if record.get("correlation_basis") != "Reported R²":
+        missing.append("correlation_basis")
+    if not record.get("unit_comparable", False):
+        missing.append("unit_conversion_basis")
+    if record.get("confirmation_requested") == "Reviewer confirmed" and not missing:
+        return "Reviewer confirmation recorded", []
+    return "Unconfirmed", missing
+
+
+def calculation_missing_evidence_text(missing: list[str], lang: str = "en") -> str:
+    labels = {
+        "source_document": ("Source document", "출처 문서"),
+        "source_version": ("Version / effective date", "버전 / 시행일"),
+        "source_location": ("Page / table / cell", "페이지 / 표 / 셀"),
+        "application_scope": ("Applicable product / batch / method", "적용 제품 / 배치 / 시험법"),
+        "reference_basis": ("Reference concentration basis", "기준농도 근거"),
+        "correction_basis": ("CoA correction basis", "CoA 보정 근거"),
+        "recovery_basis": ("Recovery calculation basis", "회수율 계산 근거"),
+        "correlation_basis": ("Reported R² evidence", "보고서 R² 근거"),
+        "unit_conversion_basis": ("Solution / product-mass unit conversion basis", "용액 / 제품 질량 단위 변환 근거"),
+        "reviewer_reconfirmation_after_input_change": ("Confirm again after calculation / source changes", "계산값 / 출처 변경 후 다시 확인"),
+        "reviewer_reconfirmation_after_profile_change": ("Confirm applicability after product / batch / profile change", "제품 / 배치 / 프로필 변경 후 적용 근거 다시 확인"),
+    }
+    return ", ".join(labels.get(field, (field, field))[1 if lang == "ko" else 0] for field in missing)
+
+
+def calculation_basis_report_frame(records: dict[str, dict[str, Any]]) -> pd.DataFrame:
+    fields = {
+        "evidence_status": "Source review status", "gate": "Numerical preparation gate",
+        "source_document": "Source document", "source_version": "Version / effective date",
+        "source_location": "Page / table / cell", "application_scope": "Applicable product / batch / method",
+        "reference_basis": "Reference concentration basis", "correction_basis": "CoA / correction evidence",
+        "correction_mode": "Correction mode", "purity_pct": "Entered purity / potency (%)",
+        "moisture_pct": "Moisture applied (%)", "effective_correction_pct": "Combined correction (%)",
+        "weighed_mg": "Weighed amount (mg)", "stock_volume_ml": "Stock volume (mL)",
+        "aliquot_ml": "Aliquot (mL)", "final_volume_ml": "Final volume (mL)",
+        "dilution_factor": "Additional dilution factor", "formula": "Dimensional formula",
+        "dilution_steps": "Dilution steps", "unit_note": "Unit comparison basis",
+        "solution_final_ug_ml": "Calculated solution concentration (ug/mL)",
+        "recovery_basis": "Recovery calculation basis", "correlation_basis": "Reported correlation expression",
+        "linearity_r2": "R² entered in calculation", "missing_evidence": "Missing evidence",
+        "profile_context": "Profile at calculation / source review", "current_profile_context": "Current product profile",
+        "prior_profile_context": "Prior product profile requiring applicability review", "profile_context_status": "Profile applicability status",
+    }
+    rows = []
+    for record in records.values():
+        for key, label in fields.items():
+            value = record.get(key)
+            if key == "missing_evidence" and isinstance(value, list):
+                value = calculation_missing_evidence_text(value) or "None recorded"
+            if isinstance(value, dict):
+                value = "; ".join(f"{field}: {item or 'Unconfirmed'}" for field, item in value.items())
+            if isinstance(value, list):
+                value = ", ".join(value) or "None recorded"
+            if value is None or value == "":
+                value = "Not applied (single combined factor)" if key == "moisture_pct" and record.get("correction_mode") == "combined" else "Unconfirmed / not recorded"
+            rows.append({"Test item": record.get("test_item", "Unconfirmed"), "Field": label, "Value": str(value)})
+    return pd.DataFrame(rows, columns=["Test item", "Field", "Value"])
 
 
 Q14_ANALYTICAL_PROCEDURE_CHECKS: list[dict[str, str]] = [
@@ -460,9 +635,28 @@ def apply_validation_extension(app: Any) -> None:
     original_response_rows = app.response_rows
     original_build_decision_packet = app.build_decision_packet
 
+    def current_calculation_context() -> dict[str, str]:
+        profile = dict(app.PROFILE_DEFAULTS)
+        profile.update(st.session_state.get("profile_values", {}))
+        return calculation_profile_context(profile)
+
+    def refresh_calculation_context() -> None:
+        context = current_calculation_context()
+        records = {
+            key: invalidate_calculation_context(record, context)
+            for key, record in st.session_state.get("calculation_basis_records", {}).items()
+        }
+        st.session_state["calculation_basis_records"] = records
+        last_calc = st.session_state.get("last_calc")
+        if isinstance(last_calc, dict) and "evidence_status" in last_calc:
+            st.session_state["last_calc"] = invalidate_calculation_context(last_calc, context)
+
     def initialize_state() -> None:
         original_initialize_state()
         st.session_state.setdefault("validation_test_item", "assay")
+        st.session_state.setdefault("calculation_basis_records", {})
+        st.session_state.setdefault("calculation_confirmation_snapshots", {})
+        refresh_calculation_context()
         _ensure_tables()
         _ensure_q14_tables()
 
@@ -582,6 +776,20 @@ def apply_validation_extension(app: Any) -> None:
         ref, unit_default, level, weighed, purity, stock_volume, aliquot, final_volume, dilution = profile["prep"]
         prefix = f"ext_prep_{profile['key']}"
         st.caption(app.profile_copy(profile, "focus", lang))
+        st.caption(
+            "Inputs start from examples. Numerical agreement does not confirm a source, method version, or product/batch applicability."
+            if lang == "en" else "입력값은 예시로 시작합니다. 농도가 수치상 일치해도 출처·시험법 버전·제품/배치 적용 근거가 확인된 것은 아닙니다."
+        )
+        correction_mode = st.selectbox(
+            "Purity / potency correction basis" if lang == "en" else "순도 / 역가 보정 방식",
+            CORRECTION_MODES,
+            format_func=lambda value: (
+                {"combined": "Single as-is purity / potency factor (water already included)", "dry_purity_and_moisture": "Dry-basis purity × (1 − moisture fraction)"}
+                if lang == "en" else
+                {"combined": "수분을 이미 반영한 단일 순도 / 역가 보정값", "dry_purity_and_moisture": "건조 기준 순도 × (1 − 수분 비율)"}
+            )[value],
+            key=f"{prefix}_correction_mode",
+        )
         c1, c2, c3 = st.columns(3)
         with c1:
             reference_conc = st.number_input("Reference concentration at 100%" if lang == "en" else "100% 기준농도", min_value=0.000001, value=float(ref), step=0.1, format="%.6f", key=f"{prefix}_ref")
@@ -590,25 +798,127 @@ def apply_validation_extension(app: Any) -> None:
         with c2:
             weighed_mg = st.number_input("Actual weighed amount (mg)" if lang == "en" else "실제 칭량량 (mg)", min_value=0.0, value=float(weighed), step=0.1, format="%.4f", key=f"{prefix}_weighed")
             purity_pct = st.number_input("Purity / potency correction %" if lang == "en" else "순도 / 역가 보정 %", min_value=0.0, value=float(purity), step=0.1, format="%.4f", key=f"{prefix}_purity")
+            moisture_pct = st.number_input(
+                "Moisture / water % (dry-basis mode only)" if lang == "en" else "수분 % (건조 기준 방식에만 적용)",
+                min_value=0.0, max_value=100.0, value=0.0, step=0.1, format="%.4f",
+                disabled=correction_mode == "combined", key=f"{prefix}_moisture",
+            )
             stock_volume_ml = st.number_input("Stock final volume (mL)" if lang == "en" else "Stock 최종부피 (mL)", min_value=0.000001, value=float(stock_volume), step=10.0, format="%.4f", key=f"{prefix}_stock")
         with c3:
             aliquot_ml = st.number_input("Aliquot taken from stock (mL)" if lang == "en" else "Stock에서 취한량 (mL)", min_value=0.0, value=float(aliquot), step=0.1, format="%.4f", key=f"{prefix}_aliquot")
             final_volume_ml = st.number_input("Final volume after aliquot (mL)" if lang == "en" else "희석 후 최종부피 (mL)", min_value=0.000001, value=float(final_volume), step=10.0, format="%.4f", key=f"{prefix}_final")
             dilution_factor = st.number_input("Additional dilution factor" if lang == "en" else "추가 희석배수", min_value=0.000001, value=float(dilution), step=0.5, format="%.4f", key=f"{prefix}_dilution")
 
-        calc = app.calculate_sample_prep(reference_conc, level_pct, weighed_mg, purity_pct, stock_volume_ml, aliquot_ml, final_volume_ml, dilution_factor)
+        try:
+            calc = calculate_preparation_basis(
+                reference_conc, level_pct, weighed_mg, purity_pct, stock_volume_ml,
+                aliquot_ml, final_volume_ml, dilution_factor, unit, correction_mode, moisture_pct,
+            )
+        except ValueError as exc:
+            # A dry-basis purity above 100% cannot support a concentration.
+            # Keep the rest of the review page usable while correcting it.
+            st.error(str(exc))
+            calc = {
+                "reference_conc": reference_conc, "unit": unit, "output_unit": "ug/mL",
+                "stock_conc": None, "final_conc": None, "target_conc": reference_conc * level_pct / 100.0,
+                "diff_pct": None, "gate": "Hold", "message": str(exc), "unit_comparable": False,
+                "unit_note": "Correct invalid preparation inputs before comparing concentrations.",
+                "formula": "Calculation unavailable: invalid preparation input", "dilution_steps": "Unconfirmed",
+                "correction_mode": correction_mode, "effective_correction_pct": None,
+            }
+        st.code(calc["formula"], language=None)
+        st.caption(calc["dilution_steps"])
+        st.caption(
+            "D_additional is the product of later dilution ratios; do not include the aliquot/final-volume step twice. The target uses reference concentration × validation level / 100."
+            if lang == "en" else "추가 희석배수는 이후 단계의 희석비를 곱한 값입니다. 취한량/최종부피 단계를 다시 포함하지 마세요. 목표농도 = 기준농도 × 밸리데이션 level / 100입니다."
+        )
+        if not calc["unit_comparable"]:
+            st.warning(calc["unit_note"] if lang == "en" else "현재 단위로 목표농도와 비교할 수 없습니다. 계산된 용액 농도는 ug/mL입니다. ug/g·ppm과 비교하려면 제품 질량·추출/분해 부피·희석 근거가 필요합니다.")
         metrics = st.columns(4)
-        metrics[0].metric("Stock concentration" if lang == "en" else "Stock 농도", f"{float(calc['stock_conc']):.4f} {unit}")
-        metrics[1].metric("Actual final concentration" if lang == "en" else "실제 최종농도", f"{float(calc['final_conc']):.4f} {unit}")
+        metrics[0].metric("Stock concentration" if lang == "en" else "Stock 농도", "N/A" if calc["stock_conc"] is None else f"{float(calc['stock_conc']):.4f} {calc['output_unit']}")
+        metrics[1].metric("Calculated final concentration" if lang == "en" else "계산된 최종농도", "N/A" if calc["final_conc"] is None else f"{float(calc['final_conc']):.4f} {calc['output_unit']}")
         metrics[2].metric("Target concentration" if lang == "en" else "목표 농도", f"{float(calc['target_conc']):.4f} {unit}")
         metrics[3].metric("Actual vs target" if lang == "en" else "목표 대비 차이", "N/A" if calc["diff_pct"] is None else f"{float(calc['diff_pct']):+.2f}%")
         if calc["gate"] == "Pass":
             st.success(app.localize_note(str(calc["message"]), lang))
         elif calc["gate"] == "Review":
             st.warning(app.localize_note(str(calc["message"]), lang))
-        else:
+        elif calc["gate"] == "Hold":
             st.error(app.localize_note(str(calc["message"]), lang))
-        return {"test_item": _label(profile, "en"), "reference_conc": reference_conc, "unit": unit, "final_conc": calc["final_conc"], "target_conc": calc["target_conc"], "diff_pct": calc["diff_pct"]}
+        else:
+            st.info(calc["message"] if lang == "en" else "목표농도 비교 상태: 미확인. 용액 단위 또는 제품 질량 기준 변환 근거를 확인하세요.")
+        with st.expander("Calculation evidence and applicability" if lang == "en" else "계산 근거 및 적용 범위", expanded=False):
+            evidence: dict[str, Any] = {}
+            labels = {
+                "source_document": ("Source document / CoA / method", "출처 문서 / CoA / 시험법"),
+                "source_version": ("Version / effective date", "버전 / 시행일"),
+                "source_location": ("Page / table / cell", "페이지 / 표 / 셀"),
+                "application_scope": ("Applicable product / batch / method", "적용 제품 / 배치 / 시험법"),
+                "reference_basis": ("Reference concentration basis", "기준농도 근거"),
+                "correction_basis": ("CoA correction basis / as-is or dry-basis statement", "CoA 보정 근거 / 현물·건조 기준 설명"),
+                "recovery_basis": ("Recovery formula / numerator / denominator / blank subtraction", "회수율 식 / 분자 / 분모 / 비첨가값 차감 근거"),
+            }
+            for field, (english, korean) in labels.items():
+                evidence[field] = st.text_input(english if lang == "en" else korean, key=f"{prefix}_{field}")
+            evidence["correlation_basis"] = st.selectbox(
+                "Reported correlation expression" if lang == "en" else "보고서 상관계수 표현",
+                CORRELATION_BASES,
+                format_func=lambda value: value if lang == "en" else {
+                    "Unconfirmed": "미확인", "Reported R²": "보고서 R²", "Reported r; R² evidence needed": "보고서 r — R² 근거 필요",
+                }[value], key=f"{prefix}_correlation_basis",
+            )
+            st.caption(
+                "The linearity calculation below uses R². A report's r must not be entered as R²; confirm the regression model and expression. Recovery basis is recorded as evidence and is not automatically applied to concentration."
+                if lang == "en" else "아래 직선성 계산은 R² 기준입니다. 보고서의 r을 R²로 입력하지 말고 회귀모형과 표현을 확인하세요. 회수율 근거는 기록만 하며 농도에 자동 보정하지 않습니다."
+            )
+            def record_confirmation() -> None:
+                snapshots = dict(st.session_state.get("calculation_confirmation_snapshots", {}))
+                snapshots[str(profile["key"])] = {
+                    suffix: st.session_state.get(f"{prefix}_{suffix}") for suffix in CALCULATION_INPUT_SUFFIXES
+                }
+                # R² is rendered separately but belongs to the same evidence.
+                snapshots[str(profile["key"])]["linearity_r2"] = st.session_state.get(f"ext_lod_{profile['key']}_r2")
+                snapshots[str(profile["key"])]["profile_context"] = current_calculation_context()
+                st.session_state["calculation_confirmation_snapshots"] = snapshots
+
+            evidence["confirmation_requested"] = st.selectbox(
+                "Source review status" if lang == "en" else "근거 확인 상태", ("Unconfirmed", "Reviewer confirmed"),
+                format_func=lambda value: value if lang == "en" else {"Unconfirmed": "미확인", "Reviewer confirmed": "검토자가 근거 확인"}[value],
+                key=f"{prefix}_confirmation_requested", on_change=record_confirmation,
+            )
+        calc.update(evidence)
+        calc["test_item"] = _label(profile, "en")
+        context = current_calculation_context()
+        calc["profile_context"] = dict(context)
+        calc["current_profile_context"] = dict(context)
+        calc["profile_context_status"] = "Current profile recorded; source applicability requires reviewer confirmation"
+        previous_record = st.session_state.get("calculation_basis_records", {}).get(str(profile["key"]), {})
+        if previous_record.get("prior_profile_context"):
+            calc["prior_profile_context"] = dict(previous_record["prior_profile_context"])
+        status, missing = calculation_evidence_status(calc)
+        if status != "Unconfirmed":
+            current_snapshot = {suffix: st.session_state.get(f"{prefix}_{suffix}") for suffix in CALCULATION_INPUT_SUFFIXES}
+            current_snapshot["linearity_r2"] = st.session_state.get(f"ext_lod_{profile['key']}_r2")
+            current_snapshot["profile_context"] = context
+            saved_snapshot = st.session_state.get("calculation_confirmation_snapshots", {}).get(str(profile["key"]))
+            if current_snapshot != saved_snapshot:
+                status = "Unconfirmed"
+                missing.append("reviewer_reconfirmation_after_input_change")
+                if not saved_snapshot or saved_snapshot.get("profile_context") != context:
+                    missing.append("reviewer_reconfirmation_after_profile_change")
+        calc.update({"evidence_status": status, "missing_evidence": missing})
+        if status == "Unconfirmed":
+            st.warning(
+                "Source status: Unconfirmed. Examples and numerical gates do not establish reviewed evidence."
+                if lang == "en" else "근거 상태: 미확인. 예시값과 수치 gate가 검토된 근거를 뜻하지 않습니다."
+            )
+            if evidence["confirmation_requested"] == "Reviewer confirmed" and missing:
+                st.caption(("Missing evidence: " if lang == "en" else "확인에 필요한 근거: ") + calculation_missing_evidence_text(missing, lang))
+                if any(item.startswith("reviewer_reconfirmation") for item in missing):
+                    st.caption("After reviewing the changes, select Unconfirmed, then Reviewer confirmed to record a fresh confirmation." if lang == "en" else "변경 근거를 검토한 뒤 상태를 ‘미확인’으로 바꾸고 ‘검토자가 근거 확인’을 다시 선택하세요.")
+        else:
+            st.info("Reviewer confirmation recorded; verify the cited document for the applicable product, batch, and method." if lang == "en" else "검토자의 근거 확인 기록입니다. 인용 문서가 해당 제품·배치·시험법에 적용되는지 확인하세요.")
+        return calc
 
     def lod_review(reference_conc: float, unit: str, profile: dict[str, Any]) -> list[str]:
         lang = str(st.session_state.get("lang", "ko"))
@@ -893,6 +1203,14 @@ def apply_validation_extension(app: Any) -> None:
         app.mini_heading(app.tr(lang, "sample_prep"), "calculator", "orange")
         calc = concentration_review(profile)
         notes = lod_review(float(calc["reference_conc"]), str(calc["unit"]), profile)
+        calc["linearity_r2"] = st.session_state.get(f"ext_lod_{profile['key']}_r2")
+        records = dict(st.session_state.get("calculation_basis_records", {}))
+        records[str(profile["key"])] = dict(calc)
+        st.session_state["calculation_basis_records"] = records
+        if calc["evidence_status"] == "Unconfirmed":
+            notes.append(f"{_label(profile, 'en')}: Source evidence is unconfirmed; numerical examples do not establish product/batch applicability.")
+        if not calc["unit_comparable"]:
+            notes.append(f"{_label(profile, 'en')}: Solution concentration is in ug/mL; the declared reference unit requires a supported conversion basis.")
         app.mini_heading(app.tr(lang, "validation_gate"), "shield", "orange")
         st.info(f"{app.tr(lang, 'result_inputs')} - {_label(profile, lang)}: {'; '.join(str(item) for item in tables[profile['key']]['Item'].tolist())}")
         rule_col = app.COLUMN_KO.get("Rule", "Rule") if lang == "ko" else "Rule"
@@ -919,9 +1237,19 @@ def apply_validation_extension(app: Any) -> None:
         st.session_state["last_risk_notes"] = notes
 
     def response_rows() -> pd.DataFrame:
+        refresh_calculation_context()
         rows = original_response_rows()
         reviews = review_frame(include_gate=True)
         additions = []
+        for key, record in st.session_state.get("calculation_basis_records", {}).items():
+            if record.get("evidence_status") == "Unconfirmed":
+                additions.append({
+                    "Question": f"Please confirm source/version and calculation basis for {record.get('test_item', key)}.",
+                    "Triggered by": "Unconfirmed calculation evidence; numerical agreement is not source confirmation",
+                    "Evidence needed": calculation_missing_evidence_text(record.get("missing_evidence", [])) or "Record reviewer verification of cited source and applicable product/batch/method",
+                    "CTD update": _profile(key)["ctd"],
+                    "Owner": "Analytical / QC / CMC RA",
+                })
         for _, row in reviews[reviews["Gate"] == "Review"].head(10).iterrows():
             additions.append(
                 {
@@ -968,6 +1296,7 @@ def apply_validation_extension(app: Any) -> None:
         return pd.concat([rows, pd.DataFrame(additions)], ignore_index=True) if additions else rows
 
     def build_decision_packet(profile: dict[str, Any]) -> str:
+        refresh_calculation_context()
         packet = original_build_decision_packet(profile)
         summary = app.markdown_table(summary_frame(), ["Test item", "Gate", "Review items", "Regulatory basis", "CTD update"])
         q14_reviews = q14_report_frame(include_gate=True)
@@ -1000,7 +1329,9 @@ def apply_validation_extension(app: Any) -> None:
                 "Note",
             ],
         )
-        extra = f"## ICH Q14 Analytical Procedure Development Check\n\n{q14_md}\n## Test-Specific Validation Summary\n\n{summary}\n### Related Substance PDE/TDI Basis\n\n{related_pde_md}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
+        calculation_records = st.session_state.get("calculation_basis_records", {})
+        calculation_md = app.markdown_table(calculation_basis_report_frame(calculation_records), ["Test item", "Field", "Value"]) if calculation_records else "Unconfirmed / not recorded. Open Calculation / Validation to record the source, version, and preparation basis.\n"
+        extra = f"## ICH Q14 Analytical Procedure Development Check\n\n{q14_md}\n## Test-Specific Validation Summary\n\n{summary}\n### Calculation Sources and Preparation Basis\n\nNumerical gates check entered values only. Example values remain unconfirmed until source evidence and applicability are reviewed. Recovery evidence is recorded separately and is not an automatic concentration correction.\n\n{calculation_md}\n### Related Substance PDE/TDI Basis\n\n{related_pde_md}\n### ICH Q3D Elemental Impurity Scope\n\n{q3d_scope_md}\n### Validation Items Needing Review\n\n{review_md}\n"
         return packet.replace("## Response Memo Seed", extra + "\n## Response Memo Seed")
 
     app.initialize_state = initialize_state
