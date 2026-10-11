@@ -22,6 +22,7 @@ from analytical_workspace import (
     record_review, refresh_reviews, report_markdown, select_tests,
 )
 from validation_extension import evaluate_q14_problem, q14_evidence_fingerprint, q14_problem_frame
+from analytical_visuals import flow_html, missing_preparation
 
 def near(actual: float, expected: float) -> None:
     assert isclose(actual, expected, rel_tol=1e-10, abs_tol=1e-12), (actual, expected)
@@ -186,6 +187,31 @@ def validate_exports() -> None:
     s["limit"]["denominator"] = "api_daily"
     wb = load_workbook(BytesIO(export_workbook(s)), data_only=False)
     near(formula_value(wb, "Exposure", "B10"), 12.5)
+    blank = new_workspace()
+    for lang in ("en", "ko"):
+        report = report_markdown(blank, lang)
+        assert "None g/day" not in report and "None mL/day" not in report
+        assert ("미확인 — 기준 입력 없음" if lang == "ko" else "Unknown — basis unavailable") in report
+
+def validate_visual_contract() -> None:
+    s = demo_workspace()
+    for lang in ("en", "ko"):
+        for kind, final in (("sample", "100 µg/mL"), ("reference", "99.5 µg/mL")):
+            prep = s["tests"]["assay"][kind]
+            calc = calculate_preparation(prep, s["product"], kind == "reference")
+            html = flow_html(prep, calc, lang)
+            assert final in html and "5 mL →" in html
+            assert ("검토 상태 별도" if lang == "ko" else "review separate") in html
+            assert not missing_preparation(prep, s["product"], kind == "reference")
+            incomplete = deepcopy(prep)
+            incomplete["stock_ml"] = None
+            html = flow_html(incomplete, None, lang)
+            assert final not in html
+            assert ("계산 미완료" if lang == "ko" else "Not calculated") in html
+            assert "stock_ml" in missing_preparation(incomplete, s["product"], kind == "reference")
+    from analytical_workspace_ui import FAMILIES
+    catalog_keys = [key for _, _, _, keys in FAMILIES for key in keys]
+    assert set(catalog_keys) == set(CATALOG) and len(catalog_keys) == len(CATALOG)
 
 def validate_ui() -> None:
     page = AppTest.from_file(str(ROOT / "streamlit_app.py"))
@@ -218,6 +244,16 @@ def validate_ui() -> None:
     assert page.selectbox(key="am_active_calculation_test").value == "assay"
     assert page.number_input(key="am_tests_assay_sample_amount").label == "분석 시료 / 표준품 채취량"
     assert page.selectbox(key="am_active_calculation_test").options[1] == "함량 / 역가"
+    # Focused provenance edits clear the intended field without altering an adjacent source cell.
+    page.selectbox(key="am_prep_origins_assay_sample_field").set_value("amount").run(timeout=30)
+    page.text_input(key="am_prep_origins_assay_sample_amount_version").set_value("v1").run(timeout=30)
+    page.text_input(key="am_prep_origins_assay_sample_amount_location").set_value("§2").run(timeout=30)
+    page.text_input(key="am_prep_origins_assay_sample_amount_version").set_value("").run(timeout=30)
+    origins = page.session_state["analytical_method_workspace"]["tests"]["assay"]["sample"]["input_sources"]
+    amount_origin = next(row for row in origins if row["field"] == "amount")
+    assert amount_origin["version"] == "" and amount_origin["location"] == "§2"
+    page.run(timeout=30)
+    assert page.text_input(key="am_prep_origins_assay_sample_amount_version").value == ""
     page.text_input(key="am_custom_name").set_value("Custom pH").run(timeout=30)
     page.button(key="am_add_custom").click().run(timeout=30)
     page.button(key="am_add_custom").click().run(timeout=30)
@@ -242,6 +278,6 @@ def validate_ui() -> None:
     assert page.number_input(key="am_tests_assay_reference_potency").label == "Assigned purity / potency (%)"
 
 if __name__ == "__main__":
-    for check in (validate_calculations, validate_reviews, validate_exports, validate_ui):
+    for check in (validate_calculations, validate_reviews, validate_exports, validate_visual_contract, validate_ui):
         check()
         print(check.__name__, "PASS")

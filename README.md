@@ -14,6 +14,8 @@ VCC connects reference concentrations with actual sample preparation values and 
 
 The opening page gives document review, calculation/validation and analytical methods their own entry buttons, plus an output preview. Five workspace buttons provide analytical methods, document input, calculation/validation, document/evidence review, and the memo. Existing detailed screens remain available in the sidebar. English is the default; Korean remains available from the first screen and via `?lang=ko`.
 
+The analytical workspace groups the test catalog into six selectable families and separates product identity, dose basis, method evidence, preparations and exports. Sample and reference preparation diagrams show original amounts, stock volumes, each aliquot/final-volume step and calculated concentrations only after the core validates the complete preparation. Potency, conversion and extraction assumptions remain visible above the diagrams; full equations and substitutions remain available. Input completion, source review and experimental support are distinct states, without an approval score. Per-value sources use a focused field editor, with a separate full-source table. Reports label unavailable daily mass or volume explicitly in Korean and English. The separate example document-review profile is collapsed on the analytical page.
+
 ## Examples and session behavior
 
 This is an editable prototype **started from example data**, including the Naltrexone product profile, document statuses, specification values, and test results. It does not start an empty production project. Replace examples with project evidence before relying on the draft. Sample provenance is shown in the workspace and exported memo.

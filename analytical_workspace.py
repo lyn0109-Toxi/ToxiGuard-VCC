@@ -398,7 +398,17 @@ def report_markdown(state: dict[str, Any], lang: str = "en") -> str:
         # Fields inactive for raw materials are retained but are not dose denominators.
         report += line(k, v)
     daily = daily_amounts(state["product"])
-    report += title("\nCalculated daily amounts", "\n계산된 일일량") + f": API {daily['api_mg_day']} mg/day; strength × units/day {daily['implied_api_mg_day']} mg/day; whole product {daily['whole_g_day']} g/day; volume {daily['whole_ml_day']} mL/day.\n\n"
+    def quantity(v: float | None, unit: str) -> str:
+        return title("Unknown — basis unavailable", "미확인 — 기준 입력 없음") if v is None else f"{v:.12g} {unit}"
+    report += title("\n### Calculated daily amounts\n\n", "\n### 계산된 일일량\n\n")
+    for en, kr, field, unit in (
+        ("API daily mass", "API 일일 질량", "api_mg_day", "mg/day"),
+        ("Strength × units/day", "표시량 × 일일 단위수", "implied_api_mg_day", "mg/day"),
+        ("Whole-product daily mass", "완제 전체 일일 질량", "whole_g_day", "g/day"),
+        ("Whole-product daily volume", "완제 전체 일일 부피", "whole_ml_day", "mL/day"),
+    ):
+        report += f"- {title(en, kr)}: {quantity(daily[field], unit)}\n"
+    report += "\n"
     if daily["issues"]:
         report += title("Missing / conflicting dose basis: ", "투여량 근거 누락 / 불일치: ") + ", ".join(label(item, lang) for item in daily["issues"]) + "\n\n"
     report += title("### Per-value provenance\n\n", "### 값별 출처\n\n")

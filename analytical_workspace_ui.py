@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from html import escape
 import json
 from typing import Any
 
 import pandas as pd
 import streamlit as st
+from analytical_visuals import UI_BUILD, STYLE, flow_html, missing_preparation, section_html, status_html
 
 from analytical_workspace import (
     BUILD, CATALOG, LABELS, MASS_MG, VOLUME_ML, add_custom_test, calculate_preparation,
@@ -69,23 +71,56 @@ def _add_test() -> None:
 
 def _provenance(record: dict[str, Any], fields: list[str], key: str, lang: str, stored_field: str) -> None:
     with st.expander("값별 입력 / 출처 / 기준" if lang == "ko" else "Per-value inputs / sources / basis"):
-        saved = {row["field"]: row for row in record.get(stored_field, [])}
-        rows = [{"field": field, "value_kind": saved.get(field, {}).get("value_kind", "entered"), **{k: saved.get(field, {}).get(k, "") for k in ("source", "version", "location", "basis_note")}} for field in fields]
-        columns = ["field", "value_kind", "source", "version", "location", "basis_note"]
-        names = {"field": "입력 항목" if lang == "ko" else "Input field", **{k: label(k, lang) for k in columns[1:]}}
-        df = pd.DataFrame(rows, columns=columns)
+        st.caption("항목 하나씩 출처를 편집합니다. 다른 항목의 기록은 유지됩니다." if lang == "ko" else "Edit one field's source at a time. Other field records are retained.")
+        selected = st.selectbox("출처를 기록할 입력 항목" if lang == "ko" else "Input field to document", fields, format_func=lambda f: label(f, lang), key=key + "_field")
+        saved = next((row for row in record.get(stored_field, []) if row["field"] == selected), {})
         kinds = ["entered", "source_derived", "proposal", "example"]
-        localized = df.copy()
-        localized["field"] = localized["field"].map(lambda v: label(v, lang))
-        localized["value_kind"] = localized["value_kind"].map(lambda v: label(v, lang))
-        edited = st.data_editor(localized.rename(columns=names), hide_index=True, width="stretch", disabled=[names["field"]], key=key + "_" + lang,
-            column_config={names["value_kind"]: st.column_config.SelectboxColumn(options=[label(v, lang) for v in kinds], required=True)})
-        edited = edited.rename(columns={v: k for k, v in names.items()})
-        edited["field"] = fields
-        reverse = {label(v, lang): v for v in kinds}
-        edited["value_kind"] = edited["value_kind"].map(reverse)
-        record[stored_field] = edited.fillna("").to_dict("records")
-        refresh_reviews(state())
+        for field in ("value_kind", "source", "version", "location", "basis_note"):
+            widget_key = key + "_" + selected + "_" + field
+            st.session_state[widget_key] = saved.get(field, "entered" if field == "value_kind" else "")
+            args = dict(key=widget_key, on_change=_origin_save, args=(record, stored_field, selected, field, widget_key))
+            if field == "value_kind":
+                st.selectbox(label(field, lang), kinds, format_func=lambda v: label(v, lang), **args)
+            else:
+                st.text_input(label(field, lang), **args)
+        with st.expander("기록된 출처 전체 보기" if lang == "ko" else "View all recorded sources"):
+            rows = record.get(stored_field, [])
+            if rows:
+                frame = pd.DataFrame(rows).fillna("")
+                for field in ("field", "value_kind"):
+                    frame[field] = frame[field].map(lambda v: label(v, lang))
+                st.dataframe(frame.rename(columns={f: label(f, lang) for f in frame.columns}), hide_index=True, width="stretch")
+            else:
+                st.caption("출처 미기록" if lang == "ko" else "No sources recorded")
+
+def _origin_save(record: dict[str, Any], stored_field: str, selected: str, field: str, widget_key: str) -> None:
+    rows = record.setdefault(stored_field, [])
+    row = next((row for row in rows if row["field"] == selected), None)
+    if row is None:
+        row = {"field": selected, "value_kind": "entered", "source": "", "version": "", "location": "", "basis_note": ""}
+        rows.append(row)
+    row[field] = st.session_state[widget_key]
+    refresh_reviews(state())
+
+def _section(number: str, en: str, ko: str, lang: str, detail_en: str = "", detail_ko: str = "") -> None:
+    st.markdown(section_html(number, ko if lang == "ko" else en, detail_ko if lang == "ko" else detail_en), unsafe_allow_html=True)
+
+def _gap(text: str) -> None:
+    st.markdown('<div class="am-missing">' + escape(text) + '</div>', unsafe_allow_html=True)
+
+FAMILIES = [
+    ("core", "Identity & content", "동일성·함량", ["identity", "assay", "appearance"]),
+    ("impurities", "Impurities & exposure", "불순물·노출", ["related_substances", "residual_solvents", "elemental_impurities", "mutagenic_impurities", "nitrosamines"]),
+    ("performance", "Dosage-form performance", "제형 성능", ["dissolution", "disintegration", "uniformity"]),
+    ("physical", "Physical properties", "물리적 특성", ["water", "particle_size", "solid_form"]),
+    ("micro", "Microbiological quality", "미생물학적 품질", ["microbiology", "sterility", "endotoxin"]),
+    ("other", "Other & custom tests", "기타·사용자 시험", ["other"]),
+]
+
+def _select_family(keys: list[str], widget_key: str) -> None:
+    chosen = st.session_state[widget_key]
+    selected = [key for key in state()["selected"] if key not in keys]
+    select_tests(state(), selected + [key for key in keys if key in chosen])
 
 def _review(key: str, kind: str, lang: str) -> None:
     record = state()["tests"][key]
@@ -108,82 +143,132 @@ def _review(key: str, kind: str, lang: str) -> None:
 def _product(lang: str) -> None:
     s = state()
     p = ("product",)
-    st.subheader("01 · 제품 / 원료 정보" if lang == "ko" else "01 · Product / material inputs")
-    _input(p, "material_type", lang, ["api", "excipient", "starting_material", "finished_product"])
-    for col, fields in zip(st.columns(3), (("name", "api_name", "identifier", "form"), ("claim_basis", "dosage_form", "route", "market"), ("manufacturer", "batch", "stage"))):
-        with col:
-            for field in fields:
-                _input(p, field, lang)
-    st.caption("API 투여량, 투여단위 표시량, 전체 제품량, 분석 시료량을 각각 입력합니다." if lang == "ko" else "API daily dose, dosage-unit strength, whole product amount and analytical sample amount are separate inputs.")
+    _section("01", "Product / material identity", "제품 / 원료 정보", lang,
+             "Define the material, label basis and intended use before selecting tests.", "시험 선택 전에 물질 구분, 표시량 기준과 사용 목적을 기록하세요.")
     with st.container(border=True):
-        dose, product = st.columns(2)
-        with dose:
-            _input(p, "max_daily_api", lang, number=True)
-            _input(p, "api_dose_unit", lang, list(MASS_MG))
-        with product:
-            if s["product"]["material_type"] == "finished_product":
-                _input(p, "strength", lang, number=True)
-                _input(p, "strength_unit", lang, list(MASS_MG))
-                _input(p, "whole_unit", lang, number=True)
-                _input(p, "whole_unit_unit", lang, [*MASS_MG, *VOLUME_ML])
-                _input(p, "units_day", lang, number=True)
-                if s["product"]["whole_unit_unit"] in VOLUME_ML:
-                    _input(p, "density", lang, number=True)
-            else:
-                _input(p, "max_daily_material", lang, number=True)
-                _input(p, "material_dose_unit", lang, list(MASS_MG))
-                st.caption("첨가제·출발물질 기여량은 임상 API 용량을 뜻하지 않습니다." if lang == "ko" else "Excipient / starting-material contribution does not establish a clinical API dose.")
-        daily = daily_amounts(s["product"])
-        a, b, c = st.columns(3)
-        fmt = lambda v, u: "—" if v is None else f"{v:.12g} {u}"
-        a.metric("입력 API 일일량" if lang == "ko" else "Entered API daily dose", fmt(daily["api_mg_day"], "mg/day"))
-        b.metric("표시량 × 투여단위수 (계산)" if lang == "ko" else "Strength × units/day (calculated)", fmt(daily["implied_api_mg_day"], "mg/day"))
-        c.metric("완제 일일 질량 (계산)" if lang == "ko" else "Whole product daily mass (calculated)", fmt(daily["whole_g_day"], "g/day"))
-        for issue in daily["issues"]:
-            st.warning(label(issue, lang))
+        _input(p, "material_type", lang, ["api", "excipient", "starting_material", "finished_product"])
+        left, right = st.columns(2)
+        with left:
+            _input(p, "name", lang)
+            _input(p, "api_name", lang)
+            _input(p, "dosage_form", lang)
+        with right:
+            _input(p, "market", lang)
+            _input(p, "claim_basis", lang, area=True)
+        _input(p, "stage", lang)
+        with st.expander("식별 정보 · 제조원 · 배치" if lang == "ko" else "Identifiers · manufacturer · batch"):
+            for col, fields in zip(st.columns(2), (("identifier", "form", "route"), ("manufacturer", "batch"))):
+                with col:
+                    for field in fields:
+                        _input(p, field, lang)
+    _section("02", "Dose and whole-product basis", "투여량과 전체 제품 기준", lang,
+             "API dose, unit strength, whole-product amount and analytical sample amount are distinct.", "API 투여량, 단위 표시량, 전체 제품량과 분석 시료량은 각각 다른 입력입니다.")
+    dose, product = st.columns(2)
+    with dose, st.container(border=True):
+        st.markdown("**API 일일 투여량**" if lang == "ko" else "**API daily dose**")
+        _input(p, "max_daily_api", lang, number=True)
+        _input(p, "api_dose_unit", lang, list(MASS_MG))
+        if s["product"]["material_type"] == "finished_product":
+            _input(p, "strength", lang, number=True)
+            _input(p, "strength_unit", lang, list(MASS_MG))
+    with product, st.container(border=True):
+        st.markdown("**전체 제품 / 원료 기여량**" if lang == "ko" else "**Whole product / material contribution**")
+        if s["product"]["material_type"] == "finished_product":
+            _input(p, "whole_unit", lang, number=True)
+            _input(p, "whole_unit_unit", lang, [*MASS_MG, *VOLUME_ML])
+            _input(p, "units_day", lang, number=True)
+            if s["product"]["whole_unit_unit"] in VOLUME_ML:
+                _input(p, "density", lang, number=True)
+        else:
+            _input(p, "max_daily_material", lang, number=True)
+            _input(p, "material_dose_unit", lang, list(MASS_MG))
+            st.caption("첨가제·출발물질 기여량은 임상 API 용량을 뜻하지 않습니다." if lang == "ko" else "Excipient / starting-material contribution does not establish a clinical API dose.")
+    daily = daily_amounts(s["product"])
+    a, b, c = st.columns(3)
+    fmt = lambda v, u: ("미확인" if lang == "ko" else "Unknown") if v is None else f"{v:.12g} {u}"
+    a.metric("입력 API 일일량" if lang == "ko" else "Entered API daily dose", fmt(daily["api_mg_day"], "mg/day"))
+    b.metric("표시량 × 일일 단위수" if lang == "ko" else "Strength × units/day", fmt(daily["implied_api_mg_day"], "mg/day"))
+    c.metric("완제 일일 질량 · 계산" if lang == "ko" else "Whole product daily mass · calculated", fmt(daily["whole_g_day"], "g/day"))
+    for issue in daily["issues"]:
+        st.warning(label(issue, lang))
     _provenance(s, list(s["product"]), "am_product_provenance", lang, "product_sources")
 
-    st.subheader("02 · 시험항목 선택" if lang == "ko" else "02 · Select analytical tests")
-    st.info("선택은 적용성 확인을 뜻하지 않습니다. 실제 각조·제형·시장·공정과 실험실 조건에 따라 근거를 기록하세요." if lang == "ko" else "Selection does not establish applicability. Record the actual monograph, dosage form, market, process and laboratory basis.")
-    st.session_state.am_selected = list(s["selected"])
-    st.multiselect("복수 시험항목" if lang == "ko" else "Multiple analytical tests", [*CATALOG, *[k for k in s["tests"] if k not in CATALOG]], key="am_selected", format_func=lambda k: test_label(k, s, lang), on_change=_select)
-    st.text_input("사용자 시험항목명" if lang == "ko" else "Custom test name", key="am_custom_name")
-    st.button("시험항목 추가" if lang == "ko" else "Add custom test", key="am_add_custom", on_click=_add_test)
-    if st.session_state.get("am_custom_error"):
-        st.warning(label(st.session_state.am_custom_error, lang))
+    _section("03", "Select test families", "시험항목 선택", lang,
+             "Selection is a planning step. Applicability needs its own evidence review.", "선택은 계획 단계입니다. 적용성은 별도의 근거 검토가 필요합니다.")
+    for offset in range(0, len(FAMILIES), 2):
+        for col, (family, en, ko, keys) in zip(st.columns(2), FAMILIES[offset:offset+2]):
+            if family == "other":
+                keys = keys + [key for key in s["tests"] if key not in CATALOG]
+            with col, st.container(border=True):
+                widget_key = "am_family_" + family
+                st.session_state[widget_key] = [key for key in keys if key in s["selected"]]
+                st.pills(ko if lang == "ko" else en, keys, selection_mode="multi", key=widget_key,
+                         format_func=lambda key: test_label(key, s, lang), width="stretch",
+                         on_change=_select_family, args=(keys, widget_key))
+    with st.expander("선택 목록 / 사용자 시험 추가" if lang == "ko" else "Selection list / add a custom test"):
+        st.session_state.am_selected = list(s["selected"])
+        st.multiselect("복수 시험항목" if lang == "ko" else "Multiple analytical tests", [*CATALOG, *[k for k in s["tests"] if k not in CATALOG]], key="am_selected", format_func=lambda k: test_label(k, s, lang), on_change=_select)
+        st.text_input("사용자 시험항목명" if lang == "ko" else "Custom test name", key="am_custom_name")
+        st.button("시험항목 추가" if lang == "ko" else "Add custom test", key="am_add_custom", on_click=_add_test)
+        if st.session_state.get("am_custom_error"):
+            st.warning(label(st.session_state.am_custom_error, lang))
 
 def _test_record(key: str, lang: str) -> None:
     s = state()
     record = s["tests"][key]
     path = ("tests", key)
-    st.subheader(test_label(key, s, lang))
-    if key in CATALOG:
-        st.caption(CATALOG[key][3 if lang == "ko" else 2])
-    _input(path, "purpose", lang)
-    _input(path, "applicability", lang, ["pending", "applicable", "not_applicable"])
-    _input(path, "rationale", lang)
-    _input(path, "source_type", lang, ["compendial", "manufacturer_source", "approved", "proposal", "experimental"])
-    _input(path, "value_kind", lang, ["entered", "source_derived", "proposal", "example"])
-    for col, fields in zip(st.columns(2), (("source", "version", "location"), ("scope", "excerpt"))):
-        with col:
-            for field in fields:
-                _input(path, field, lang, area=field == "excerpt")
-    for field in ("specification", "procedure", "preparation", "sst", "verification_plan", "validation_plan", "experimental_data"):
-        _input(path, field, lang, area=True)
-    _provenance(record, ["purpose", "specification", "procedure", "preparation", "sst", "verification_plan", "validation_plan"], "am_method_origins_" + key, lang, "input_sources")
-    _input(path, "approach", lang, ["minimal", "enhanced"])
-    st.caption("Q14 최소 접근법도 가능합니다. 정식 ATP 문서·DoE·MODR은 보편적 필수사항이 아닙니다. Q2(R2)는 성능 검증, Q6는 규격, Q3/M7은 불순물 노출·관리 근거입니다." if lang == "ko" else "Q14 permits a minimal approach. A formal ATP document, DoE and MODR are not universal requirements. Q2(R2) addresses validation, Q6 specifications, and Q3/M7 impurity exposure and controls.")
+    _section("01", test_label(key, s, lang), test_label(key, s, lang), lang,
+             CATALOG[key][2] if key in CATALOG else "", CATALOG[key][3] if key in CATALOG else "")
     fields = ("purpose", "rationale", "specification", "procedure", "preparation", "sst", "verification_plan", "validation_plan")
     missing = [label(f, lang) for f in fields if not record[f].strip()]
-    st.caption(("입력 미완료: " if lang == "ko" else "Inputs incomplete: ") + ", ".join(missing) if missing else ("입력 항목 기록됨; 근거·실험 확인은 별도" if lang == "ko" else "Input fields recorded; evidence and experimental support remain separate"))
-    source, experimental = st.columns(2)
-    with source:
-        st.markdown("**근거 확인**" if lang == "ko" else "**Source verification**")
-        _review(key, "evidence", lang)
-    with experimental:
-        st.markdown("**실험적 뒷받침**" if lang == "ko" else "**Experimental support**")
-        _review(key, "experiment", lang)
-    with st.expander("DMF / 제조원 자료 대조" if lang == "ko" else "DMF / supplier source comparison"):
+    complete = "입력 미완료" if lang == "ko" else "Inputs incomplete"
+    if not missing:
+        complete = "입력 기록됨" if lang == "ko" else "Inputs recorded"
+    st.markdown(status_html([
+        ("입력 항목" if lang == "ko" else "Input fields", complete, "근거·실험 확인은 별도" if lang == "ko" else "Evidence and experiments are separate"),
+        ("근거 확인" if lang == "ko" else "Source verification", label("reviewed" if record.get("evidence_review") else "pending", lang), label(record["applicability"], lang)),
+        ("실험적 뒷받침" if lang == "ko" else "Experimental support", label("reviewed" if record.get("experiment_review") else "pending", lang), "QC 사용 승인 아님" if lang == "ko" else "Not QC use approval"),
+    ]), unsafe_allow_html=True)
+    if missing:
+        _gap(("필요한 입력: " if lang == "ko" else "Missing inputs: ") + ", ".join(missing))
+    with st.container(border=True):
+        _input(path, "purpose", lang)
+        left, right = st.columns(2)
+        with left:
+            _input(path, "applicability", lang, ["pending", "applicable", "not_applicable"])
+        with right:
+            _input(path, "source_type", lang, ["compendial", "manufacturer_source", "approved", "proposal", "experimental"])
+        _input(path, "rationale", lang, area=True)
+    _section("02", "Source and method record", "출처와 시험법 기록", lang,
+             "Record the current source and scope; the selected catalog does not supply a method.", "현행 원문과 적용 범위를 기록합니다. 선택한 시험 목록이 시험법을 제공하지 않습니다.")
+    with st.expander("원문 · 버전 · 적용 범위" if lang == "ko" else "Source · version · application scope", expanded=True):
+        for col, fields in zip(st.columns(2), (("source", "version", "location"), ("scope", "excerpt"))):
+            with col:
+                for field in fields:
+                    _input(path, field, lang, area=field in {"source", "scope", "excerpt"})
+        _input(path, "value_kind", lang, ["entered", "source_derived", "proposal", "example"])
+    for en, ko, fields in [
+        ("Specification and system suitability", "규격과 시스템적합성", ("specification", "sst")),
+        ("Procedure and preparation", "분석절차와 조제법", ("procedure", "preparation")),
+        ("Verification, validation and experimental support", "검증·밸리데이션과 실험 근거", ("verification_plan", "validation_plan", "experimental_data")),
+    ]:
+        count = sum(not record[f].strip() for f in fields)
+        suffix = (f" · {count}개 미기록" if lang == "ko" else f" · {count} unrecorded") if count else ""
+        with st.expander((ko if lang == "ko" else en) + suffix):
+            for field in fields:
+                _input(path, field, lang, area=True)
+    _provenance(record, ["purpose", "specification", "procedure", "preparation", "sst", "verification_plan", "validation_plan"], "am_method_origins_" + key, lang, "input_sources")
+    with st.expander("Q14 접근법과 독립 검토 기록" if lang == "ko" else "Q14 approach and independent review records"):
+        _input(path, "approach", lang, ["minimal", "enhanced"])
+        st.caption("Q14 최소 접근법도 가능합니다. 정식 ATP 문서·DoE·MODR은 보편적 필수사항이 아닙니다. Q2(R2)는 성능 검증, Q6는 규격, Q3/M7은 불순물 노출·관리 근거입니다." if lang == "ko" else "Q14 permits a minimal approach. A formal ATP document, DoE and MODR are not universal requirements. Q2(R2) addresses validation, Q6 specifications, and Q3/M7 impurity exposure and controls.")
+        source, experimental = st.columns(2)
+        with source:
+            st.markdown("**근거 확인**" if lang == "ko" else "**Source verification**")
+            _review(key, "evidence", lang)
+        with experimental:
+            st.markdown("**실험적 뒷받침**" if lang == "ko" else "**Experimental support**")
+            _review(key, "experiment", lang)
+    with st.expander("DMF / 제조원 자료 대조 · 미검토" if lang == "ko" else "DMF / supplier comparison · unreviewed"):
         st.info(label("dmf_pending", lang))
         for field in ("source", "version", "location", "scope"):
             _input(("dmf",), field, lang)
@@ -195,42 +280,70 @@ def _preparation(key: str, kind: str, lang: str) -> None:
     s = state()
     prep = s["tests"][key][kind]
     path = ("tests", key, kind)
-    st.subheader(label(kind, lang))
-    basis_options = ["direct_analyte"] if kind == "reference" else ["direct_analyte", "product_mass", "product_volume", "whole_matrix"]
-    _input(path, "basis", lang, basis_options)
-    _input(path, "amount", lang, number=True)
-    _input(path, "amount_unit", lang, [*MASS_MG, *VOLUME_ML] if kind == "sample" else list(MASS_MG))
-    _input(path, "correction_mode", lang, ["none", "as_is", "dry"])
-    if prep["correction_mode"] != "none":
-        _input(path, "potency", lang, number=True)
-    if prep["correction_mode"] == "dry":
-        _input(path, "water", lang, number=True)
-    _input(path, "basis_factor", lang, number=True)
-    _input(path, "basis_note", lang)
-    if kind == "sample":
-        _input(path, "extraction", lang, number=True)
-        st.caption("추출 분율은 명시적 계산 가정입니다. 회수율 측정값을 자동 보정에 사용하지 않습니다." if lang == "ko" else "Extraction fraction is an explicit calculation assumption. Measured recovery is not automatically used as a correction.")
-    _input(path, "stock_ml", lang, number=True)
-    step_key = "am_steps_" + key + "_" + kind + "_" + lang
-    columns = {k: label(k, lang) for k in ("aliquot_ml", "final_ml")}
-    frame = pd.DataFrame(prep["steps"], columns=list(columns)).rename(columns=columns)
-    edited = st.data_editor(frame, num_rows="dynamic", hide_index=True, key=step_key, width="stretch",
-        column_config={v: st.column_config.NumberColumn(v, min_value=0.0, required=True) for v in columns.values()})
-    prep["steps"] = edited.astype(object).where(pd.notnull(edited), None).rename(columns={v: k for k, v in columns.items()}).to_dict("records")
-    _input(path, "value_kind", lang, ["entered", "source_derived", "proposal", "example"])
-    for field in ("source", "version", "location"):
-        _input(path, field, lang)
-    _provenance(prep, ["amount", "amount_unit", "basis", "correction_mode", "potency", "water", "basis_factor", "extraction", "stock_ml"], "am_prep_origins_" + key + "_" + kind, lang, "input_sources")
-    refresh_reviews(s)
-    try:
-        calc = calculate_preparation(prep, s["product"], kind == "reference")
-        st.metric("최종 농도 (계산)" if lang == "ko" else "Final concentration (calculated)", f"{calc['final_ug_ml']:.12g} ug/mL")
-        if calc["matrix_g_ml"] is not None:
-            st.caption(f"{calc['matrix_g_ml']:.12g} g/mL " + ("전체 매트릭스" if lang == "ko" else "whole matrix"))
-        st.code(calc["formula"] + "\n" + "\n".join(calc["trace"]), language=None, wrap_lines=True)
-    except (ValueError, TypeError, OverflowError) as exc:
-        st.info(label("incomplete", lang) + ": " + label(str(exc), lang))
-    _review(key, kind, lang)
+    with st.container(border=True):
+        _section("S" if kind == "sample" else "R", label(kind, lang), label(kind, lang), lang)
+        st.caption(label("reviewed" if prep.get("review") else "pending", lang) + " · " + label(prep["value_kind"], lang))
+        fmt = lambda v: ("미확인" if lang == "ko" else "Unknown") if v is None else f"{v:.12g}"
+        assumptions = [label(prep["correction_mode"], lang), label("basis_factor", lang) + ": " + fmt(prep.get("basis_factor"))]
+        if prep["correction_mode"] != "none":
+            assumptions.append(label("potency", lang) + ": " + fmt(prep.get("potency")))
+        if prep["correction_mode"] == "dry":
+            assumptions.append(label("water", lang) + ": " + fmt(prep.get("water")))
+        if kind == "sample":
+            assumptions.append(label("extraction", lang) + ": " + fmt(prep.get("extraction")))
+        st.caption(" · ".join(assumptions))
+        flow = st.empty()
+        missing_slot = st.empty()
+        basis_options = ["direct_analyte"] if kind == "reference" else ["direct_analyte", "product_mass", "product_volume", "whole_matrix"]
+        _input(path, "basis", lang, basis_options)
+        amount, unit = st.columns([1.3, 1])
+        with amount:
+            _input(path, "amount", lang, number=True)
+        with unit:
+            _input(path, "amount_unit", lang, [*MASS_MG, *VOLUME_ML] if kind == "sample" else list(MASS_MG))
+        _input(path, "stock_ml", lang, number=True)
+        with st.expander("역가 · 추출 · 염 환산 기준" if lang == "ko" else "Potency · extraction · analyte conversion"):
+            _input(path, "correction_mode", lang, ["none", "as_is", "dry"])
+            if prep["correction_mode"] != "none":
+                _input(path, "potency", lang, number=True)
+            if prep["correction_mode"] == "dry":
+                _input(path, "water", lang, number=True)
+            _input(path, "basis_factor", lang, number=True)
+            _input(path, "basis_note", lang, area=True)
+            if kind == "sample":
+                _input(path, "extraction", lang, number=True)
+                st.caption("추출 분율은 명시적 계산 가정입니다. 회수율 측정값을 자동 보정에 사용하지 않습니다." if lang == "ko" else "Extraction fraction is an explicit calculation assumption. Measured recovery is not automatically used as a correction.")
+        st.markdown("**연속 희석 · 각 행은 한 단계**" if lang == "ko" else "**Serial dilution · one step per row**")
+        st.caption("분취량 → 희석 후 최종부피 (mL). 희석이 없으면 표를 비워두세요." if lang == "ko" else "Aliquot → diluted final volume (mL). Leave the table empty when there is no dilution.")
+        step_key = "am_steps_" + key + "_" + kind + "_" + lang
+        columns = {k: label(k, lang) for k in ("aliquot_ml", "final_ml")}
+        frame = pd.DataFrame(prep["steps"], columns=list(columns)).rename(columns=columns)
+        edited = st.data_editor(frame, num_rows="dynamic", hide_index=True, key=step_key, width="stretch",
+            column_config={v: st.column_config.NumberColumn(v, min_value=0.0, required=True) for v in columns.values()})
+        prep["steps"] = edited.astype(object).where(pd.notnull(edited), None).rename(columns={v: k for k, v in columns.items()}).to_dict("records")
+        with st.expander("조제 근거와 값별 출처" if lang == "ko" else "Preparation basis and per-value sources"):
+            _input(path, "value_kind", lang, ["entered", "source_derived", "proposal", "example"])
+            for field in ("source", "version", "location"):
+                _input(path, field, lang)
+            _provenance(prep, ["amount", "amount_unit", "basis", "correction_mode", "potency", "water", "basis_factor", "extraction", "stock_ml"], "am_prep_origins_" + key + "_" + kind, lang, "input_sources")
+        refresh_reviews(s)
+        missing = missing_preparation(prep, s["product"], kind == "reference")
+        if missing:
+            text = ("계산에 필요한 입력: " if lang == "ko" else "Calculation needs: ") + ", ".join(label(f, lang) for f in missing)
+            missing_slot.markdown('<div class="am-missing">' + escape(text) + '</div>', unsafe_allow_html=True)
+        calc = None
+        try:
+            calc = calculate_preparation(prep, s["product"], kind == "reference")
+            st.metric("최종 농도 (계산)" if lang == "ko" else "Final concentration (calculated)", f"{calc['final_ug_ml']:.12g} ug/mL")
+            if calc["matrix_g_ml"] is not None:
+                st.caption(f"{calc['matrix_g_ml']:.12g} g/mL " + ("전체 매트릭스" if lang == "ko" else "whole matrix"))
+            with st.expander("전체 수식 · 대입값 · 단위 확인" if lang == "ko" else "Complete equation · substitutions · units", expanded=True):
+                st.code(calc["formula"] + "\n" + "\n".join(calc["trace"]), language=None, wrap_lines=True)
+        except (ValueError, TypeError, OverflowError) as exc:
+            st.info(label("incomplete", lang) + ": " + label(str(exc), lang))
+        flow.markdown(flow_html(prep, calc, lang), unsafe_allow_html=True)
+        with st.expander("독립 계산 검토 기록" if lang == "ko" else "Independent calculation review record"):
+            _review(key, kind, lang)
 
 def _limit(lang: str) -> None:
     st.subheader("불순물 허용 노출량 환산" if lang == "ko" else "Impurity exposure allowance conversion")
@@ -255,14 +368,15 @@ def _limit(lang: str) -> None:
 
 def render(lang: str) -> None:
     s = state()
-    st.header("분석법 작업공간" if lang == "ko" else "Analytical method workspace")
-    st.caption(BUILD)
-    st.button("가상 정제 예시 불러오기 (이 작업공간 대체)" if lang == "ko" else "Load fictional tablet demo (replace this workspace)", key="am_demo", on_click=_demo)
+    st.markdown(STYLE, unsafe_allow_html=True)
+    title = "분석법 작업공간" if lang == "ko" else "Analytical method workspace"
+    description = "원료와 완제의 기준을 구분하고, 시험법 근거와 조제 계산을 독립적으로 검토하세요." if lang == "ko" else "Separate material and product bases, then review method evidence and preparation calculations independently."
+    st.markdown(f'<section class="am-heading"><div class="am-kicker">METHOD DEVELOPMENT / REVIEW</div><h2>{title}</h2><p>{description}</p><div class="am-legend"><span class="am-tag">{label("entered", lang)}</span><span class="am-tag source">{label("source_derived", lang)}</span><span class="am-tag calc">{label("calculated", lang)}</span></div></section>', unsafe_allow_html=True)
     if s["example"]:
         st.warning(label("example", lang))
     else:
-        st.info("빈 작업공간입니다. 원문 확인과 실험 근거는 각각 기록합니다." if lang == "ko" else "This workspace starts blank. Source verification and experimental support are recorded separately.")
-    tabs = st.tabs(["제품·시험항목", "시험법·근거", "검액·표준액 독립 계산", "노출 한도·보고서"] if lang == "ko" else ["Product & tests", "Method & evidence", "Independent sample & reference", "Exposure & reports"])
+        st.caption("원문 확인 · 실험 근거 · 계산 검토는 각각 기록합니다. 미확인 값은 비워두세요." if lang == "ko" else "Source verification, experiments and calculation review are separate. Leave unknown values blank.")
+    tabs = st.tabs(["01 제품·시험", "02 시험법·근거", "03 검액·표준액", "04 한도·보고서"] if lang == "ko" else ["01 Product & tests", "02 Methods & evidence", "03 Concentrations", "04 Limits & reports"])
     with tabs[0]:
         _product(lang)
     if s["selected"]:
@@ -271,6 +385,7 @@ def render(lang: str) -> None:
             _test_record(selected, lang)
         with tabs[2]:
             selected = _input((), "active_calculation_test", lang, s["selected"])
+            st.caption("각 흐름의 계산값은 전체 입력이 유효할 때만 표시됩니다. 최종 농도가 계산되어도 독립 검토는 별도입니다." if lang == "ko" else "Flow values appear only when the complete preparation is valid. A calculated concentration still needs its own independent review.")
             sample, reference = st.columns(2)
             with sample:
                 _preparation(selected, "sample", lang)
@@ -283,12 +398,19 @@ def render(lang: str) -> None:
             st.info("먼저 시험항목을 선택하세요." if lang == "ko" else "Select a test first.")
     with tabs[3]:
         _limit(lang)
+        _section("02", "Export the review record", "검토 기록 내보내기", lang,
+                 "Exports retain inputs, equations, source gaps and review states.", "입력값, 수식, 근거 누락과 검토 상태를 함께 내보냅니다.")
         report = report_markdown(s, lang)
-        st.download_button("분석법 보고서 다운로드" if lang == "ko" else "Download analytical method report", report.encode("utf-8"), file_name=f"VCC_Analytical_Method_{lang}.md", mime="text/markdown", key="am_report_download")
-        st.download_button("수식 포함 Excel 다운로드" if lang == "ko" else "Download Excel with formulas", export_workbook(s, lang), file_name=f"VCC_Analytical_Method_{lang}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="am_excel_download")
-        st.download_button("입력·검토 JSON 다운로드" if lang == "ko" else "Download input / review JSON", json.dumps(s, ensure_ascii=False, indent=2, allow_nan=False).encode(), file_name=f"VCC_Analytical_Method_{lang}.json", mime="application/json", key="am_json_download")
+        with st.container(horizontal=True):
+            st.download_button("보고서 · Markdown" if lang == "ko" else "Report · Markdown", report.encode("utf-8"), file_name=f"VCC_Analytical_Method_{lang}.md", mime="text/markdown", key="am_report_download")
+            st.download_button("수식 포함 Excel" if lang == "ko" else "Excel with formulas", export_workbook(s, lang), file_name=f"VCC_Analytical_Method_{lang}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="am_excel_download")
+            st.download_button("입력·검토 JSON" if lang == "ko" else "Inputs / reviews · JSON", json.dumps(s, ensure_ascii=False, indent=2, allow_nan=False).encode(), file_name=f"VCC_Analytical_Method_{lang}.json", mime="application/json", key="am_json_download")
         with st.expander("보고서 미리보기" if lang == "ko" else "Report preview"):
             st.markdown(report)
+    with st.expander("예시와 작업공간 정보" if lang == "ko" else "Demo and workspace details"):
+        st.caption(UI_BUILD + " · " + BUILD)
+        st.button("가상 정제 예시 불러오기 (이 작업공간 대체)" if lang == "ko" else "Load fictional tablet demo (replace this workspace)", key="am_demo", on_click=_demo)
+        st.caption("이 버튼은 현재 작업공간을 대체합니다. 예시에는 검증되지 않은 가상 수치만 있습니다." if lang == "ko" else "This button replaces the current workspace. The demo contains fictional, unvalidated values.")
 
 def apply_analytical_workspace(app: Any) -> None:
     if getattr(app, "_analytical_workspace_applied", False):
@@ -310,5 +432,5 @@ def apply_analytical_workspace(app: Any) -> None:
         return text
     app.render_selected_page = page
     app.build_decision_packet = packet
-    app.APP_BUILD = BUILD
+    app.APP_BUILD = UI_BUILD
     app._analytical_workspace_applied = True

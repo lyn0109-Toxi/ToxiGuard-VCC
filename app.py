@@ -3536,11 +3536,13 @@ def remember_profile(field: str) -> None:
 
 def render_sidebar(lang: str) -> dict[str, Any]:
     if st.session_state.get("active_page") == "method":
-        st.sidebar.header("기존 문서 검토 프로필" if lang == "ko" else "Existing document-review profile")
-        st.sidebar.caption("분석법 대상 제품은 본문의 제품·시험항목 탭에 입력합니다. 아래는 기존 문서 검토의 별도 프로필입니다." if lang == "ko" else "Enter the analytical-method product in Product & tests. The profile below belongs to the existing document review.")
+        st.sidebar.caption("분석법 대상 제품은 본문의 제품·시험 탭에 입력합니다." if lang == "ko" else "Enter the analytical product in Product & tests.")
+        profile_ui = st.sidebar.expander("별도 문서 검토 프로필 · 예시" if lang == "ko" else "Separate document profile · example")
+        profile_ui.caption("기존 문서 검토의 별도 프로필이며 분석법 제품과 다릅니다." if lang == "ko" else "This separate profile belongs to document review, not the analytical product.")
     else:
         st.sidebar.header(tr(lang, "product_profile"))
         st.sidebar.caption("예시 제품입니다. 검토할 제품의 정보로 수정하세요." if lang == "ko" else "Sample product. Replace these values with your product context.")
+        profile_ui = st.sidebar
     profile = dict(st.session_state.get("profile_values", PROFILE_DEFAULTS))
     label_keys = {"dosage": "dosage_form", "stage": "lifecycle_stage"}
     for field, default in PROFILE_DEFAULTS.items():
@@ -3549,17 +3551,18 @@ def render_sidebar(lang: str) -> dict[str, Any]:
         st.session_state[widget_key] = profile.get(field, default)
         label = tr(lang, label_keys.get(field, field))
         if field == "stage":
-            value = st.sidebar.selectbox(label,
+            value = profile_ui.selectbox(label,
                 ["Development", "Validation", "Submission prep", "Response", "Final approval", "Lifecycle change"],
                 format_func=lambda item: localize_value(item, lang),
                 key=widget_key, on_change=remember_profile, args=(field,))
         else:
-            value = st.sidebar.text_input(label, key=widget_key, on_change=remember_profile, args=(field,))
+            value = profile_ui.text_input(label, key=widget_key, on_change=remember_profile, args=(field,))
         profile[field] = value
         st.session_state[field] = value
     st.session_state.profile_values = profile
     st.sidebar.divider()
-    st.sidebar.caption("예시에서 시작한 검토 초안" if lang == "ko" else "Review draft started from examples")
+    if st.session_state.get("active_page") != "method":
+        st.sidebar.caption("예시에서 시작한 검토 초안" if lang == "ko" else "Review draft started from examples")
     st.sidebar.caption("새로고침 전에 검토 메모를 내려받으세요." if lang == "ko" else "Download the review memo before refreshing.")
     return profile
 
@@ -3620,10 +3623,11 @@ def render_icon_nav(lang: str, current_page: str) -> None:
         ("dashboard", "문서·근거 검토", "Document / evidence review", {"dashboard", "evidence", "spec", "dmf"}),
         ("response", "검토 메모", "Review memo", {"response"}),
     ]
-    for column, (page, ko, en, members) in zip(st.columns(len(steps)), steps):
-        column.button(ko if lang == "ko" else en, key="workflow_"+page,
-                      width="stretch", type="primary" if current_page in members else "secondary",
-                      on_click=go_to_page, args=(page,))
+    with st.container(key="vcc_workflow"):
+        for column, (page, ko, en, members) in zip(st.columns(len(steps)), steps):
+            column.button(ko if lang == "ko" else en, key="workflow_"+page,
+                          width="stretch", type="primary" if current_page in members else "secondary",
+                          on_click=go_to_page, args=(page,))
     render_detail_nav(lang, current_page)
 
 
@@ -4948,6 +4952,7 @@ def render_launcher(lang: str) -> None:
 
 def main() -> None:
     from vcc_experience import COPY, STYLE, render_guidance
+    from analytical_visuals import STYLE as WORKSPACE_STYLE
     st.set_page_config(page_title="ToxiGuard VCC · Validation & CMC Review", page_icon="📋",
                        layout="wide", initial_sidebar_state="auto")
     if should_show_landing():
@@ -4961,11 +4966,13 @@ def main() -> None:
         st.markdown("### ToxiGuard VCC")
         render_language_selector(lang)
         from feedback import render_feedback
-        render_feedback(lang)
+        with st.expander("도움말 · 의견 보내기" if lang == "ko" else "Help · send feedback"):
+            render_feedback(lang)
     page_key = current_page_key()
     st.session_state.active_page = page_key
     render_header(lang)
     st.markdown(STYLE, unsafe_allow_html=True)
+    st.markdown(WORKSPACE_STYLE, unsafe_allow_html=True)
     if page_key == "case":
         render_detail_nav(lang, page_key)
         from vcc_telmisartan import render as render_case
