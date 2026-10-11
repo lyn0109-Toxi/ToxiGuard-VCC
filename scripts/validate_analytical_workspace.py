@@ -192,6 +192,16 @@ def validate_exports() -> None:
         report = report_markdown(blank, lang)
         assert "None g/day" not in report and "None mL/day" not in report
         assert ("미확인 — 기준 입력 없음" if lang == "ko" else "Unknown — basis unavailable") in report
+    matrix = blank_preparation()
+    matrix.update(basis="whole_matrix", amount=.1, amount_unit="g", stock_ml=100)
+    s["tests"]["assay"]["sample"] = matrix
+    for lang in ("en", "ko"):
+        report = report_markdown(s, lang)
+        assert ("전체 매트릭스 농도 (계산): 0.001 g/mL" if lang == "ko" else "Whole-matrix concentration (calculated): 0.001 g/mL") in report
+        wb = load_workbook(BytesIO(export_workbook(s, lang)), data_only=False)
+        assert ("전체 매트릭스 질량" if lang == "ko" else "Whole-matrix mass") in wb["02_sample"]["A12"].value
+        near(formula_value(wb, "02_sample", "B16"), 1000)
+        near(formula_value(wb, "02_sample", "B19"), .001)
 
 def validate_visual_contract() -> None:
     s = demo_workspace()
@@ -209,9 +219,57 @@ def validate_visual_contract() -> None:
             assert final not in html
             assert ("계산 미완료" if lang == "ko" else "Not calculated") in html
             assert "stock_ml" in missing_preparation(incomplete, s["product"], kind == "reference")
+        matrix = blank_preparation()
+        matrix.update(basis="whole_matrix", amount=.1, amount_unit="g", stock_ml=100)
+        calc = calculate_preparation(matrix, s["product"])
+        near(calc["matrix_g_ml"], .001)
+        html = flow_html(matrix, calc, lang)
+        assert ("전체 매트릭스 농도" if lang == "ko" else "Whole-matrix concentration") in html
+        assert "0.001 g/mL" in html
+        assert "nominal analyte" not in html and "명목 분석대상" not in html
+        assert "whole matrix mass" in calc["formula"] and "nominal analyte mass" not in calc["formula"]
     from analytical_workspace_ui import FAMILIES
     catalog_keys = [key for _, _, _, keys in FAMILIES for key in keys]
     assert set(catalog_keys) == set(CATALOG) and len(catalog_keys) == len(CATALOG)
+
+def validate_immediate_dilution_reviews() -> None:
+    page = AppTest.from_file(str(ROOT / "streamlit_app.py")).run(timeout=30)
+    page.button(key="landing_method_button").click().run(timeout=30)
+    page.button(key="am_demo").click().run(timeout=30)
+    page.selectbox(key="am_active_method_test").set_value("assay").run(timeout=30)
+    page.selectbox(key="am_active_calculation_test").set_value("assay").run(timeout=30)
+    s = page.session_state["analytical_method_workspace"]
+    r = s["tests"]["assay"]
+    r.update(applicability="applicable", rationale="Fixture scope", source="Fixture source", version="v1", location="§1", scope="Fixture lab", excerpt="Fixture", specification="Fixture", procedure="Fixture", preparation="Fixture", sst="Fixture", verification_plan="Fixture", validation_plan="Fixture", experimental_data="Fixture")
+    for kind in ("sample", "evidence", "experiment"):
+        record_review(s, "assay", kind, "Fixture reviewer", "Fixture independent review")
+    page.run(timeout=30)
+    page.session_state["am_steps_assay_sample_en"] = {"edited_rows": {0: {"Diluted final volume (mL)": 100}}, "added_rows": [], "deleted_rows": []}
+    page.run(timeout=30)
+    r = page.session_state["analytical_method_workspace"]["tests"]["assay"]
+    assert not page.exception
+    assert all(r[k] is None for k in ("evidence_review", "experiment_review")) and r["sample"]["review"] is None
+    assert not any(c.value.startswith("Review recorded") for c in page.caption)
+    assert not any("<strong>Review recorded</strong>" in m.value for m in page.markdown)
+    near(calculate_preparation(r["sample"], s["product"])["final_ug_ml"], 50)
+    # Each frontend delta is consumed once, including adding/deleting/clearing rows.
+    revision = page.session_state["am_steps_revision_assay_sample"]
+    page.session_state[f"am_steps_assay_sample_en_v{revision}"] = {"edited_rows": {}, "added_rows": [{"Aliquot (mL)": 1, "Diluted final volume (mL)": 10}], "deleted_rows": []}
+    page.run(timeout=30).run(timeout=30)
+    r = page.session_state["analytical_method_workspace"]["tests"]["assay"]
+    assert len(r["sample"]["steps"]) == 2
+    near(calculate_preparation(r["sample"], s["product"])["final_ug_ml"], 5)
+    revision = page.session_state["am_steps_revision_assay_sample"]
+    page.session_state[f"am_steps_assay_sample_en_v{revision}"] = {"edited_rows": {}, "added_rows": [], "deleted_rows": [1]}
+    page.run(timeout=30)
+    assert len(page.session_state["analytical_method_workspace"]["tests"]["assay"]["sample"]["steps"]) == 1
+    revision = page.session_state["am_steps_revision_assay_sample"]
+    page.session_state[f"am_steps_assay_sample_en_v{revision}"] = {"edited_rows": {0: {"Diluted final volume (mL)": None}}, "added_rows": [], "deleted_rows": []}
+    page.run(timeout=30)
+    assert not page.exception
+    r = page.session_state["analytical_method_workspace"]["tests"]["assay"]
+    assert r["sample"]["steps"][0]["final_ml"] is None
+    rejects(lambda: calculate_preparation(r["sample"], s["product"]))
 
 def validate_ui() -> None:
     page = AppTest.from_file(str(ROOT / "streamlit_app.py"))
@@ -278,6 +336,6 @@ def validate_ui() -> None:
     assert page.number_input(key="am_tests_assay_reference_potency").label == "Assigned purity / potency (%)"
 
 if __name__ == "__main__":
-    for check in (validate_calculations, validate_reviews, validate_exports, validate_visual_contract, validate_ui):
+    for check in (validate_calculations, validate_reviews, validate_exports, validate_visual_contract, validate_immediate_dilution_reviews, validate_ui):
         check()
         print(check.__name__, "PASS")

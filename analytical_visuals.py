@@ -4,7 +4,7 @@ from typing import Any
 
 from analytical_workspace import label
 
-UI_BUILD = "analytical-design-2026-10-11-v2"
+UI_BUILD = "analytical-design-2026-10-11-v3"
 
 STYLE = """
 <style>
@@ -94,6 +94,7 @@ def missing_preparation(prep: dict[str, Any], product: dict[str, Any], reference
 def flow_html(prep: dict[str, Any], calc: dict[str, Any] | None, lang: str) -> str:
     """No intermediate concentration is displayed until the core validates every step."""
     ko = lang == "ko"
+    matrix = prep["basis"] == "whole_matrix"
     def word(en: str, kr: str) -> str:
         return kr if ko else en
     def fmt(value: Any, unit: str) -> str:
@@ -101,11 +102,18 @@ def flow_html(prep: dict[str, Any], calc: dict[str, Any] | None, lang: str) -> s
     flask = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 15h8"/></svg>'
     original_detail = label(prep["basis"], lang)
     if calc:
-        original_detail += " · " + word("nominal analyte ", "명목 분석대상 ") + fmt(calc["nominal_mg"], "mg") + " · " + word("corrected ", "보정 후 ") + fmt(calc["corrected_mg"], "mg")
+        if matrix:
+            original_detail += " · " + word("total matrix ", "전체 매트릭스 ") + fmt(calc["nominal_mg"], "mg")
+        else:
+            original_detail += " · " + word("nominal analyte ", "명목 분석대상 ") + fmt(calc["nominal_mg"], "mg") + " · " + word("corrected ", "보정 후 ") + fmt(calc["corrected_mg"], "mg")
+    concentration_unit = word("µg matrix/mL", "µg 매트릭스/mL") if matrix else "µg/mL"
     nodes = [(word("Original amount", "원래 채취량"), fmt(prep.get("amount"), prep["amount_unit"]), original_detail, False),
-             (word("Stock solution", "원액"), fmt(prep.get("stock_ml"), "mL"), fmt(calc["stock_ug_ml"], "µg/mL") if calc else word("Concentration pending", "농도 계산 대기"), False)]
+             (word("Stock solution", "원액"), fmt(prep.get("stock_ml"), "mL"), fmt(calc["stock_ug_ml"], concentration_unit) if calc else word("Concentration pending", "농도 계산 대기"), False)]
     for index, step in enumerate(prep.get("steps", []), 1):
         concentration = calc["steps"][index-1]["concentration_ug_ml"] if calc else None
-        nodes.append((word(f"Dilution {index}", f"희석 {index}"), f'{fmt(step.get("aliquot_ml"), "mL")} → {fmt(step.get("final_ml"), "mL")}', fmt(concentration, "µg/mL") if calc else word("Concentration pending", "농도 계산 대기"), False))
-    nodes.append((word("Final concentration", "최종 농도"), fmt(calc["final_ug_ml"], "µg/mL") if calc else word("Not calculated", "계산 미완료"), word("Calculated · review separate", "계산값 · 검토 상태 별도") if calc else word("Complete missing inputs", "누락 입력 확인 필요"), True))
+        nodes.append((word(f"Dilution {index}", f"희석 {index}"), f'{fmt(step.get("aliquot_ml"), "mL")} → {fmt(step.get("final_ml"), "mL")}', fmt(concentration, concentration_unit) if calc else word("Concentration pending", "농도 계산 대기"), False))
+    final_title = word("Whole-matrix concentration", "전체 매트릭스 농도") if matrix else word("Final concentration", "최종 농도")
+    final_value = fmt(calc["matrix_g_ml"], "g/mL") if matrix and calc else fmt(calc["final_ug_ml"], "µg/mL") if calc else word("Not calculated", "계산 미완료")
+    final_detail = word("Matrix basis · not analyte concentration", "매트릭스 기준 · 분석대상 농도와 별도") if matrix else word("Calculated · review separate", "계산값 · 검토 상태 별도")
+    nodes.append((final_title, final_value, final_detail if calc else word("Complete missing inputs", "누락 입력 확인 필요"), True))
     return '<div class="am-flow">' + ''.join(f'<article class="am-node{" final" if final else ""}">{flask}<small>{escape(title)}</small><strong>{escape(value)}</strong><span>{escape(detail)}</span></article>' for title, value, detail, final in nodes) + '</div>'

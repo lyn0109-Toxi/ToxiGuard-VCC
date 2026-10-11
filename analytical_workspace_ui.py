@@ -122,6 +122,31 @@ def _select_family(keys: list[str], widget_key: str) -> None:
     selected = [key for key in state()["selected"] if key not in keys]
     select_tests(state(), selected + [key for key in keys if key in chosen])
 
+def _step_widget_key(key: str, kind: str, lang: str) -> str:
+    base = "am_steps_" + key + "_" + kind + "_" + lang
+    revision = st.session_state.get("am_steps_revision_" + key + "_" + kind, 0)
+    return base + (f"_v{revision}" if revision else "")
+
+def _replace_steps(key: str, kind: str, steps: list[dict[str, Any]]) -> None:
+    prep = state()["tests"][key][kind]
+    prep["steps"] = steps
+    revision_key = "am_steps_revision_" + key + "_" + kind
+    st.session_state[revision_key] = st.session_state.get(revision_key, 0) + 1
+    refresh_reviews(state())
+
+def _step_change(key: str, kind: str, widget_key: str, baseline: list[dict[str, Any]], lang: str) -> None:
+    """Reconcile editor deltas before any method/calculate review status renders."""
+    delta = st.session_state[widget_key]
+    rows = deepcopy(baseline)
+    reverse = {label(field, lang): field for field in ("aliquot_ml", "final_ml")}
+    for index, changes in delta.get("edited_rows", {}).items():
+        for column, value in changes.items():
+            rows[int(index)][reverse[column]] = value
+    deleted = set(delta.get("deleted_rows", []))
+    rows = [row for index, row in enumerate(rows) if index not in deleted]
+    rows += [{field: row.get(label(field, lang)) for field in ("aliquot_ml", "final_ml")} for row in delta.get("added_rows", [])]
+    _replace_steps(key, kind, rows)
+
 def _review(key: str, kind: str, lang: str) -> None:
     record = state()["tests"][key]
     review = record[kind].get("review") if kind in {"sample", "reference"} else record.get(kind + "_review")
@@ -315,12 +340,18 @@ def _preparation(key: str, kind: str, lang: str) -> None:
                 st.caption("추출 분율은 명시적 계산 가정입니다. 회수율 측정값을 자동 보정에 사용하지 않습니다." if lang == "ko" else "Extraction fraction is an explicit calculation assumption. Measured recovery is not automatically used as a correction.")
         st.markdown("**연속 희석 · 각 행은 한 단계**" if lang == "ko" else "**Serial dilution · one step per row**")
         st.caption("분취량 → 희석 후 최종부피 (mL). 희석이 없으면 표를 비워두세요." if lang == "ko" else "Aliquot → diluted final volume (mL). Leave the table empty when there is no dilution.")
-        step_key = "am_steps_" + key + "_" + kind + "_" + lang
+        step_key = _step_widget_key(key, kind, lang)
         columns = {k: label(k, lang) for k in ("aliquot_ml", "final_ml")}
         frame = pd.DataFrame(prep["steps"], columns=list(columns)).rename(columns=columns)
         edited = st.data_editor(frame, num_rows="dynamic", hide_index=True, key=step_key, width="stretch",
+            on_change=_step_change, args=(key, kind, step_key, deepcopy(prep["steps"]), lang),
             column_config={v: st.column_config.NumberColumn(v, min_value=0.0, required=True) for v in columns.values()})
-        prep["steps"] = edited.astype(object).where(pd.notnull(edited), None).rename(columns={v: k for k, v in columns.items()}).to_dict("records")
+        next_steps = edited.astype(object).where(pd.notnull(edited), None).rename(columns={v: k for k, v in columns.items()}).to_dict("records")
+        if next_steps != prep["steps"]:
+            # Also handles programmatically supplied/testing editor state. New revision
+            # consumes each delta once, including additions/deletions and blank cells.
+            _replace_steps(key, kind, next_steps)
+            st.rerun()
         with st.expander("조제 근거와 값별 출처" if lang == "ko" else "Preparation basis and per-value sources"):
             _input(path, "value_kind", lang, ["entered", "source_derived", "proposal", "example"])
             for field in ("source", "version", "location"):
@@ -334,9 +365,11 @@ def _preparation(key: str, kind: str, lang: str) -> None:
         calc = None
         try:
             calc = calculate_preparation(prep, s["product"], kind == "reference")
-            st.metric("최종 농도 (계산)" if lang == "ko" else "Final concentration (calculated)", f"{calc['final_ug_ml']:.12g} ug/mL")
             if calc["matrix_g_ml"] is not None:
-                st.caption(f"{calc['matrix_g_ml']:.12g} g/mL " + ("전체 매트릭스" if lang == "ko" else "whole matrix"))
+                st.metric("전체 매트릭스 농도 (계산)" if lang == "ko" else "Whole-matrix concentration (calculated)", f"{calc['matrix_g_ml']:.12g} g/mL")
+                st.caption("분석대상 농도와 별도 · 계산 검토 상태 별도" if lang == "ko" else "Separate from analyte concentration · calculation review separate")
+            else:
+                st.metric("최종 농도 (계산)" if lang == "ko" else "Final concentration (calculated)", f"{calc['final_ug_ml']:.12g} ug/mL")
             with st.expander("전체 수식 · 대입값 · 단위 확인" if lang == "ko" else "Complete equation · substitutions · units", expanded=True):
                 st.code(calc["formula"] + "\n" + "\n".join(calc["trace"]), language=None, wrap_lines=True)
         except (ValueError, TypeError, OverflowError) as exc:

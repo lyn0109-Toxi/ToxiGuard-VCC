@@ -265,7 +265,8 @@ def calculate_preparation(prep: dict[str, Any], product: dict[str, Any], referen
     values = (corrected_mg, stock_ug_ml, current)
     if any(not isfinite(value) or value <= 0 for value in values):
         raise ValueError("Nonfinite or underflowed concentration")
-    return {"original_mg": original_mg, "nominal_mg": nominal_mg, "correction": correction, "basis_factor": basis_factor, "extraction": extraction, "corrected_mg": corrected_mg, "stock_ug_ml": stock_ug_ml, "final_ug_ml": current, "matrix_g_ml": current / 1_000_000 if basis == "whole_matrix" else None, "steps": steps, "trace": trace, "formula": "C_final [ug/mL] = nominal analyte mass [mg] × 1000 [ug/mg] × potency factor × analyte conversion factor × extraction fraction / V_stock [mL] × Π(V_aliquot [mL]/V_final [mL])"}
+    formula = "C_matrix [g/mL] = whole matrix mass [mg] × 0.001 [g/mg] / V_stock [mL] × Π(V_aliquot [mL]/V_final [mL])" if basis == "whole_matrix" else "C_final [ug/mL] = nominal analyte mass [mg] × 1000 [ug/mg] × potency factor × analyte conversion factor × extraction fraction / V_stock [mL] × Π(V_aliquot [mL]/V_final [mL])"
+    return {"original_mg": original_mg, "nominal_mg": nominal_mg, "correction": correction, "basis_factor": basis_factor, "extraction": extraction, "corrected_mg": corrected_mg, "stock_ug_ml": stock_ug_ml, "final_ug_ml": current, "matrix_g_ml": current / 1_000_000 if basis == "whole_matrix" else None, "steps": steps, "trace": trace, "formula": formula}
 
 def impurity_limit(state: dict[str, Any], matrix_prep: dict[str, Any] | None = None) -> dict[str, Any]:
     limit = state["limit"]
@@ -448,7 +449,10 @@ def report_markdown(state: dict[str, Any], lang: str = "en") -> str:
             try:
                 calculated = calculate_preparation(prep, state["product"], kind == "reference")
                 report += calculated["formula"] + "\n\n" + "\n\n".join(calculated["trace"]) + "\n\n"
-                report += f"{label('calculated', lang)}: {calculated['final_ug_ml']:.12g} ug/mL\n\n"
+                if prep["basis"] == "whole_matrix":
+                    report += title("Whole-matrix concentration (calculated): ", "전체 매트릭스 농도 (계산): ") + f"{calculated['matrix_g_ml']:.12g} g/mL\n\n"
+                else:
+                    report += f"{label('calculated', lang)}: {calculated['final_ug_ml']:.12g} ug/mL\n\n"
             except (ValueError, TypeError, OverflowError) as exc:
                 report += label("incomplete", lang) + ": " + label(str(exc), lang) + "\n\n"
         for row in comparison_rows(record, lang):
@@ -531,20 +535,26 @@ def export_workbook(state: dict[str, Any], lang: str = "en") -> bytes:
             whole_factor = MASS_MG.get(state["product"]["whole_unit_unit"], VOLUME_ML.get(state["product"]["whole_unit_unit"]))
             sheet["B5"] = f"={pc('whole_unit')}*{factor(pc('whole_unit_unit'), unit_mapping)}" if prep["basis"] in {"product_mass", "product_volume"} else 1
             sheet["B8"] = "=B6/100*(1-B7/100)" if prep["correction_mode"] == "dry" else ("=B6/100" if prep["correction_mode"] == "as_is" else "=1")
-            sheet.append(["Nominal mass (mg)" if lang == "en" else "명목 질량 (mg)", "=B2*B3*B4/B5", "mg"])
+            matrix = prep["basis"] == "whole_matrix"
+            unit_label = "ug matrix/mL" if matrix else "ug/mL"
+            mass_label = ("Whole-matrix mass (mg)" if lang == "en" else "전체 매트릭스 질량 (mg)") if matrix else ("Nominal mass (mg)" if lang == "en" else "명목 질량 (mg)")
+            sheet.append([mass_label, "=B2*B3*B4/B5", "mg"])
             sheet.append(["Corrected mass (mg)" if lang == "en" else "보정 질량 (mg)", "=B12*B8*B9*B10/100", "mg"])
-            sheet.append(["Stock concentration" if lang == "en" else "원액 농도", "=B13*1000/B11", "ug/mL"])
+            sheet.append(["Stock concentration" if lang == "en" else "원액 농도", "=B13*1000/B11", unit_label])
             previous = "B14"
-            sheet.append(["Step" if lang == "en" else "단계", label("aliquot_ml", lang), label("final_ml", lang), "C (ug/mL)"])
+            sheet.append(["Step" if lang == "en" else "단계", label("aliquot_ml", lang), label("final_ml", lang), "C (" + unit_label + ")"])
             for row, step in enumerate(prep["steps"], 16):
                 sheet.append([row - 15, step.get("aliquot_ml"), step.get("final_ml"), f"={previous}*B{row}/C{row}"])
                 previous = f"D{row}"
             row = sheet.max_row + 1
-            sheet.append(["Final concentration" if lang == "en" else "최종 농도", "=" + previous, "ug/mL"])
+            final_label = ("Whole-matrix concentration" if lang == "en" else "전체 매트릭스 농도") if matrix else ("Final concentration" if lang == "en" else "최종 농도")
+            sheet.append([final_label, "=" + previous, unit_label])
             try:
                 calc = calculate_preparation(prep, state["product"], kind == "reference")
-                sheet.append(["App calculation snapshot" if lang == "en" else "앱 계산 스냅샷", calc["final_ug_ml"], "ug/mL"])
+                sheet.append(["App calculation snapshot" if lang == "en" else "앱 계산 스냅샷", calc["final_ug_ml"], unit_label])
                 sheet.append(["Compare to snapshot (ug/mL)" if lang == "en" else "스냅샷 차이 (ug/mL)", f"=B{row}-B{row+1}"])
+                if matrix:
+                    sheet.append(["Whole-matrix concentration (g/mL)" if lang == "en" else "전체 매트릭스 농도 (g/mL)", f"=B{row}/1000000", "g/mL"])
                 for equation in calc["trace"]:
                     sheet.append([equation])
             except (ValueError, TypeError, OverflowError) as exc:
