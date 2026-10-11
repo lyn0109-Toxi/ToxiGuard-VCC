@@ -3535,8 +3535,12 @@ def remember_profile(field: str) -> None:
 
 
 def render_sidebar(lang: str) -> dict[str, Any]:
-    st.sidebar.header(tr(lang, "product_profile"))
-    st.sidebar.caption("예시 제품입니다. 검토할 제품의 정보로 수정하세요." if lang == "ko" else "Sample product. Replace these values with your product context.")
+    if st.session_state.get("active_page") == "method":
+        st.sidebar.header("기존 문서 검토 프로필" if lang == "ko" else "Existing document-review profile")
+        st.sidebar.caption("분석법 대상 제품은 본문의 제품·시험항목 탭에 입력합니다. 아래는 기존 문서 검토의 별도 프로필입니다." if lang == "ko" else "Enter the analytical-method product in Product & tests. The profile below belongs to the existing document review.")
+    else:
+        st.sidebar.header(tr(lang, "product_profile"))
+        st.sidebar.caption("예시 제품입니다. 검토할 제품의 정보로 수정하세요." if lang == "ko" else "Sample product. Replace these values with your product context.")
     profile = dict(st.session_state.get("profile_values", PROFILE_DEFAULTS))
     label_keys = {"dosage": "dosage_form", "stage": "lifecycle_stage"}
     for field, default in PROFILE_DEFAULTS.items():
@@ -3610,6 +3614,7 @@ def update_subset_frame(state_key: str, edited_subset: pd.DataFrame, filter_colu
 def render_icon_nav(lang: str, current_page: str) -> None:
     # Native callbacks rerun the app without opening a new Streamlit session.
     steps = [
+        ("method", "분석법 작업공간", "Analytical methods", {"method"}),
         ("intake", "자료 입력", "Document input", {"intake", "documents"}),
         ("validation", "계산·밸리데이션", "Calculation / validation", {"validation"}),
         ("dashboard", "문서·근거 검토", "Document / evidence review", {"dashboard", "evidence", "spec", "dmf"}),
@@ -4972,7 +4977,7 @@ def main() -> None:
     if page_key in {"intake", "documents"}:
         st.caption("제품 정보·기존 검토표는 예시로 시작합니다. 고객 파일 접수 현황에는 직접 등록한 자료만 표시됩니다."
                    if lang == "ko" else "Product context and existing review tables start from examples. Customer file receipt shows only your registered documents.")
-    else:
+    elif page_key != "method":
         st.caption(COPY[lang]["sample_banner"])
     render_guidance(page_key, lang)
     render_selected_page(page_key, lang, profile)

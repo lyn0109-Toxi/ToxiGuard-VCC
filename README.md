@@ -12,7 +12,7 @@ VCC connects reference concentrations with actual sample preparation values and 
 - **계산·밸리데이션 / Calculation and validation** — preparation values, reference concentrations, editable rules and limits, Q14, Q3D, and related-substance PDE/TDI checks.
 - **검토 메모 / Review memo** — current inputs, calculations, guideline checks, client questions, and CTD actions in a downloadable memo.
 
-The opening page gives document review and calculation/validation their own direct entry buttons, plus an output preview. Four workspace buttons provide document input, calculation/validation, document/evidence review, and the memo. All nine detailed screens remain available in the sidebar. English is the default; Korean remains available from the first screen and via `?lang=ko`.
+The opening page gives document review, calculation/validation and analytical methods their own entry buttons, plus an output preview. Five workspace buttons provide analytical methods, document input, calculation/validation, document/evidence review, and the memo. Existing detailed screens remain available in the sidebar. English is the default; Korean remains available from the first screen and via `?lang=ko`.
 
 ## Examples and session behavior
 
@@ -33,7 +33,7 @@ Readiness scores and review gates are internal rule-based summaries of user inpu
 - Existing Q14 checklist status, related-substance PDE/TDI concentration application, and Q3D route / Core 7 / Full 24 / individual PDE checks
 - Client questions, CTD update directions, and downloadable review memo
 
-Calculation logic and regulatory reference tables are unchanged by this interface update. Native navigation replaces full-page links; Korean table headers have unique reverse mappings, and the validation extension is applied once per imported app module.
+The existing review tools and regulatory reference tables remain available alongside the explicit analytical-method workspace. Native navigation preserves sessions; Korean table headers have unique reverse mappings, and each extension is applied once per imported app module.
 
 ## Run Locally
 
@@ -261,3 +261,63 @@ Files and review records are still session-scoped. These features do not add a
 persistent project database, company authentication or an approval of a public
 hosting environment for confidential company documents. Use company-approved
 processing and hosting settings before applying real company materials.
+
+## Analytical methods / 분석법 작업공간
+
+Open **Analytical methods** or `?enter=1&page=method&lang=en` (Korean: `lang=ko`).
+This workspace starts blank. Its product inputs are separate from the existing
+example-based document-review profile; the legacy tables are preserved. The
+fictional tablet demo replaces only this workspace and is labelled unvalidated
+with sources pending.
+
+- Separate API, excipient, starting material and finished-product inputs; maximum
+  daily API dose, dosage-unit strength, whole product mass/volume, daily dosage
+  units, density where needed, and analytical sample amount.
+- Multiple selection from 18 test categories and custom tests. Selection does not
+  establish applicability. Each method records purpose, scope, source/version/
+  location, specification, procedure/preparation, SST, verification/validation
+  plans and experimental evidence. Per-value provenance is editable.
+- Independent sample/reference calculations show original inputs and units,
+  nominal analyte mass, as-is or dry-basis potency, analyte conversion, explicit
+  extraction assumption, stock and serial aliquot/final-volume substitutions.
+  As-is potency ignores saved water; whole-matrix digestion mass cannot receive
+  analyte potency corrections. No universal concentration is recommended.
+- Calculation review, source verification and experimental support are separate.
+  Relevant input, method/source/scope or product-context changes invalidate
+  reviews. Restoring old inputs does not restore a review.
+- A compendial baseline can proceed with **DMF unreviewed**. Supplier comparison
+  exposes pending evidence and textual differences without declaring equivalence.
+- Exposure conversion requires an entered, source-specific allowance and an
+  explicit API, whole-product or material daily-mass denominator. Liquid mass
+  requires density. Conflicting API dose and strength × daily units block the
+  API-dose conversion. General TTC is never inserted for nitrosamines. Whole-
+  matrix preparations can independently derive J.
+- Korean/English Markdown reports, JSON snapshots and Excel workbooks with
+  editable inputs and linked formulas are downloadable. Excel recalculates
+  formula cells; app calculation snapshots support comparison. Review records
+  apply to the exported snapshot and need renewed review after workbook edits.
+  The analytical report is appended to the existing memo.
+
+**한국어:** 원료와 완제 입력, 일일 API 용량과 완제 전체 질량, 검액과 표준액
+계산을 각각 구분합니다. 시험항목 선택·입력 완료·원문 확인·실험 근거 확인은
+서로 다른 상태입니다. DMF 미검토 상태에서도 공정서 기초안을 진행할 수 있으며,
+근거가 없는 공정서 시험법·한도·권장 농도를 생성하지 않습니다.
+
+Q14 **Defined** alone now remains **Review**. The compatible **Pass** value is
+retained only for explicit source review with document/version/location/scope/
+reviewer and a matching input snapshot; it is not validation or QC approval.
+Edits and product-context changes withdraw confirmation. Q14's minimal approach
+remains valid; formal ATP documentation, DoE and MODR are not universal requirements.
+Q2(R2) final validation guidance differs from Q6 specifications and Q3/M7 impurity
+controls. See [Q14 final guidance](https://www.ema.europa.eu/en/documents/scientific-guideline/ich-q14-guideline-analytical-procedure-development-step-5-revision-1_en.pdf)
+§2.1 and §3, and [Q2(R2) final guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/q2r2-validation-analytical-procedures).
+
+```bash
+python scripts/validate_analytical_workspace.py
+```
+
+This check covers the fictional 400 mg API/day, 1.2 g product/day, 100 ug/mL
+sample and 99.5 ug/mL reference, mass/volume units, density, serial dilutions,
+invalid inputs, independent/stale reviews, bilingual navigation, repeated custom
+tests, partially filled dilutions, text-formula protection and independent
+evaluation of exported Excel formulas.

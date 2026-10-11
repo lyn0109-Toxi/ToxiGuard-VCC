@@ -22,3 +22,4 @@ jobs:
       - run: python scripts/validate_document_trace.py
       - run: python scripts/validate_calculation_basis.py
       - run: python scripts/validate_dosage_checklist.py
+      - run: python scripts/validate_analytical_workspace.py

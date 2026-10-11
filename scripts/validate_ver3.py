@@ -277,8 +277,8 @@ def assert_edited_validation_criteria_and_q14_survive_navigation() -> None:
         raise AssertionError("Edited validation criteria did not reach the saved review table")
     if app_module.evaluate_rule(first) != "Review":
         raise AssertionError("The user-defined rule did not change the review result")
-    if q14.iloc[0]["Status"] != "Defined" or evaluate_q14_problem(q14.iloc[0]) != "Pass":
-        raise AssertionError("The Q14 status edit did not change its review result")
+    if q14.iloc[0]["Status"] != "Defined" or evaluate_q14_problem(q14.iloc[0]) != "Review":
+        raise AssertionError("A Q14 input edit must remain unverified until source review")
 
     page.button(key="workflow_response").click().run(timeout=30)
     assert_current_page(page, "response")
@@ -476,7 +476,7 @@ def main() -> None:
         "니트로사민",
         "ICH M14",
         "ICH Q14 분석법 설정 문제점",
-        "밸리데이션 결과만으로 충분하지 않습니다",
+        "ICH Q14는 최소·강화 접근법을 허용합니다",
         "ICH Q3D 금속불순물 범위",
         "Q3D 실무 해석",
         "Full Q3D screening",

@@ -274,8 +274,8 @@ def validate_q14_method_setup_check() -> None:
     gated["Gate"] = gated.apply(evaluate_q14_problem, axis=1)
     if int((gated["Gate"] == "Review").sum()) < 1:
         raise AssertionError("Default Q14 frame should surface method setup review items")
-    if evaluate_q14_problem(pd.Series({"Status": "Defined", "Risk": "High"})) != "Pass":
-        raise AssertionError("Defined Q14 item should pass even when the inherent topic risk is high")
+    if evaluate_q14_problem(pd.Series({"Status": "Defined", "Risk": "High"})) != "Review":
+        raise AssertionError("Defined alone must not establish evidence verification")
     if evaluate_q14_problem(pd.Series({"Status": "Gap", "Risk": "Low"})) != "Review":
         raise AssertionError("Gap status should trigger Q14 review")
 

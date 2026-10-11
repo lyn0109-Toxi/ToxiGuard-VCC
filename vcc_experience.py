@@ -102,6 +102,7 @@ def render_landing(lang: str, go_to_page: Callable, language_selector: Callable)
     validation.button(c["validation_start"], key="landing_validation_button", type="primary", width="stretch", on_click=go_to_page, args=("validation",))
     preview.button(c["preview"], key="landing_preview_button", width="stretch", on_click=go_to_page, args=("response",))
     st.caption(c["sample_note"])
+    st.button("분석법 작업공간 시작 · 원료 / 완제" if lang == "ko" else "Start analytical methods · materials / drug products", key="landing_method_button", type="primary", width="stretch", on_click=go_to_page, args=("method",))
     st.button("Telmisartan · NORA 연계 사례" if lang == "ko" else "Telmisartan · NORA linked case", key="landing_case_button", width="stretch", on_click=go_to_page, args=("case",))
     st.subheader(c["process"])
     st.markdown('<div class="vcc-steps">'+''.join(

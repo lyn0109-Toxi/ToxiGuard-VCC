@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from html import escape
+from hashlib import sha256
+import json
 from math import isfinite
 from typing import Any
 
@@ -193,10 +195,10 @@ Q14_ANALYTICAL_PROCEDURE_CHECKS: list[dict[str, str]] = [
         "Q14 check": "ATP and intended purpose",
         "Status": "Partial",
         "Risk": "High",
-        "Problem signal": "The method has validation results, but the measurement objective, CQA, reportable result, range, and decision use are not written as an ATP.",
+        "Problem signal": "The intended purpose, quality attribute, reportable result, range or performance rationale is unclear. A formal ATP document is not universally required.",
         "Evidence to request": "Analytical target profile or equivalent rationale linking CQA, intended purpose, performance criteria, and reportable range.",
         "CTD update": "3.2.P.5.2 / 3.2.P.5.3 / 3.2.P.5.6",
-        "Q14 anchor": "ATP drives technology choice and validation performance criteria.",
+        "Q14 anchor": "Intended purpose and performance criteria guide development; Q14 permits minimal and enhanced approaches.",
     },
     {
         "Q14 check": "Attribute and matrix definition",
@@ -238,8 +240,8 @@ Q14_ANALYTICAL_PROCEDURE_CHECKS: list[dict[str, str]] = [
         "Q14 check": "Robustness and parameter ranges",
         "Status": "Partial",
         "Risk": "High",
-        "Problem signal": "Robustness is tested as a checklist, but parameter ranges, interactions, MODR/PAR, or edge-of-range behavior are unclear.",
-        "Evidence to request": "Robustness design, DoE or univariate range study, challenged parameters, acceptance criteria, and confirmed operating ranges.",
+        "Problem signal": "Robustness or justified operating conditions are unclear for the intended approach. DoE and MODR are optional enhanced tools.",
+        "Evidence to request": "Approach-appropriate robustness evidence, prior knowledge or justified experiments and operating conditions; enhanced DoE/MODR only where chosen.",
         "CTD update": "3.2.P.5.3 / 3.2.P.5.6",
         "Q14 anchor": "Robustness and analytical procedure parameter ranges support procedure understanding.",
     },
@@ -257,7 +259,7 @@ Q14_ANALYTICAL_PROCEDURE_CHECKS: list[dict[str, str]] = [
         "Status": "Gap",
         "Risk": "Medium",
         "Problem signal": "Which method parameters are regulatory commitments, which are operational ranges, and what change category applies are not defined.",
-        "Evidence to request": "EC/PAR/MODR or lifecycle change table with reporting category, comparability expectation, and revalidation trigger.",
+        "Evidence to request": "Applicable lifecycle change rationale, comparability expectation and revalidation trigger; EC/PAR/MODR where used, not as universal requirements.",
         "CTD update": "3.2.P.5.2 / 3.2.P.5.3 / lifecycle management",
         "Q14 anchor": "Enhanced understanding can support ECs and lifecycle change management.",
     },
@@ -561,14 +563,26 @@ def _rows(profile: dict[str, Any]) -> pd.DataFrame:
 def q14_problem_frame(test_item: str = "Analytical procedure") -> pd.DataFrame:
     frame = pd.DataFrame(Q14_ANALYTICAL_PROCEDURE_CHECKS)
     frame.insert(0, "Test item", test_item)
+    for field in ("Source document", "Source version", "Source location", "Application scope", "Evidence reviewer", "Evidence fingerprint"):
+        frame[field] = ""
+    frame["Evidence status"] = "Unconfirmed"
     return frame
 
 
+def q14_evidence_fingerprint(row: pd.Series) -> str:
+    fields = ("Test item", "Q14 check", "Status", "Risk", "Problem signal", "Evidence to request", "CTD update", "Q14 anchor", "Source document", "Source version", "Source location", "Application scope", "Evidence reviewer")
+    values = {field: str(row.get(field, "")).strip() for field in fields}
+    return sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
+
+
 def evaluate_q14_problem(row: pd.Series) -> str:
+    """Compatibility gate values; Defined describes input, not verified evidence."""
     status = str(row.get("Status", "")).strip()
     risk = str(row.get("Risk", "")).strip()
     if status == "Defined":
-        return "Pass"
+        required = ("Source document", "Source version", "Source location", "Application scope", "Evidence reviewer")
+        verified = row.get("Evidence status") == "Reviewer confirmed" and all(str(row.get(field, "")).strip() and not pd.isna(row.get(field)) for field in required)
+        return "Pass" if verified and row.get("Evidence fingerprint") == q14_evidence_fingerprint(row) else "Review"
     if status == "N/A":
         return "Info"
     if status in {"Gap", "Partial"}:
@@ -597,6 +611,10 @@ def _ensure_q14_tables() -> dict[str, pd.DataFrame]:
         }
     for profile in PROFILES:
         st.session_state.q14_development_tables.setdefault(profile["key"], q14_problem_frame(_label(profile, "en")))
+        frame = st.session_state.q14_development_tables[profile["key"]]
+        for field in ("Source document", "Source version", "Source location", "Application scope", "Evidence reviewer", "Evidence fingerprint", "Evidence status"):
+            if field not in frame:
+                frame[field] = "Unconfirmed" if field == "Evidence status" else ""
     return st.session_state.q14_development_tables
 
 
@@ -627,6 +645,8 @@ def apply_validation_extension(app: Any) -> None:
     if getattr(app, "_vcc_validation_extension_applied", False):
         return
     app.APP_BUILD = APP_BUILD
+    app.COLUMN_KO.update({"Source document": "근거 문서", "Source version": "근거 버전", "Source location": "근거 위치", "Application scope": "적용 범위", "Evidence reviewer": "근거 검토자", "Evidence fingerprint": "근거 입력 스냅샷", "Evidence status": "근거 확인 상태"})
+    app.KO_TO_COLUMN.update({value: key for key, value in app.COLUMN_KO.items()})
     app.ICON_SVG.update(ICONS)
     app.TEXT["ko"]["calc_help"] = "ICH Q14 분석법 설정 문제점, 시료 제조 농도, 결과 gate를 시험항목별로 검토합니다."
     app.TEXT["en"]["calc_help"] = "Review ICH Q14 method setup risks, sample preparation, and result gates by test item."
@@ -642,6 +662,12 @@ def apply_validation_extension(app: Any) -> None:
 
     def refresh_calculation_context() -> None:
         context = current_calculation_context()
+        prior = st.session_state.get("q14_evidence_context")
+        if prior is not None and prior != context:
+            for frame in st.session_state.get("q14_development_tables", {}).values():
+                frame["Evidence status"] = "Unconfirmed"
+                frame["Evidence fingerprint"] = ""
+        st.session_state["q14_evidence_context"] = context
         records = {
             key: invalidate_calculation_context(record, context)
             for key, record in st.session_state.get("calculation_basis_records", {}).items()
@@ -710,10 +736,9 @@ def apply_validation_extension(app: Any) -> None:
             "orange",
         )
         st.info(
-            "ICH Q14 lens: validation results alone are not enough. Confirm the ATP, procedure understanding, "
-            "risk-ranked parameters, robustness/ranges, control strategy, and lifecycle change logic before treating the method as submission-ready."
+            "ICH Q14 permits minimal and enhanced approaches. Intended purpose, procedure understanding, robustness and controls need appropriate evidence; a formal ATP, DoE or MODR is not universally required. Defined records input completion only. Pass below means the cited evidence review was recorded, not method validation or QC approval."
             if lang == "en"
-            else "ICH Q14 관점에서는 밸리데이션 결과만으로 충분하지 않습니다. 제출 가능한 분석법으로 보기 전에 ATP, 분석법 이해도, risk-ranked parameter, robustness/range, control strategy, lifecycle change logic을 확인해야 합니다."
+            else "ICH Q14는 최소·강화 접근법을 허용합니다. 목적·분석법 이해·강건성·관리전략에 적절한 근거가 필요하며 정식 ATP·DoE·MODR은 보편적 필수사항이 아닙니다. Defined는 입력 완료입니다. 아래 Pass는 원문 검토 기록이며 밸리데이션이나 QC 승인이 아닙니다."
         )
         tables = _ensure_q14_tables()
         selected_key = str(profile["key"])
@@ -725,6 +750,7 @@ def apply_validation_extension(app: Any) -> None:
             width="stretch",
             num_rows="dynamic",
             key=f"q14_editor_{selected_key}",
+            disabled=[app.COLUMN_KO.get(field, field) if lang == "ko" else field for field in ("Evidence status", "Evidence fingerprint")],
             column_config={
                 status_col: st.column_config.SelectboxColumn(status_col, options=app.option_labels(Q14_STATUS_OPTIONS, lang), required=True),
                 risk_col: st.column_config.SelectboxColumn(risk_col, options=app.option_labels(["High", "Medium", "Low"], lang), required=True),
@@ -733,6 +759,19 @@ def apply_validation_extension(app: Any) -> None:
             lang,
         )
         edited = edited.copy().drop(columns=["Gate"], errors="ignore")
+        for idx, row in edited.iterrows():
+            if row.get("Evidence fingerprint") != q14_evidence_fingerprint(row):
+                edited.at[idx, "Evidence status"] = "Unconfirmed"
+                edited.at[idx, "Evidence fingerprint"] = ""
+        review_index = st.selectbox("Q14 evidence row" if lang == "en" else "Q14 근거 확인 행", list(edited.index), format_func=lambda idx: str(edited.loc[idx, "Q14 check"]), key=f"q14_evidence_row_{selected_key}") if len(edited) else None
+        if review_index is not None and st.button("Record Q14 source review" if lang == "en" else "Q14 원문 검토 기록", key=f"q14_evidence_confirm_{selected_key}"):
+            row = edited.loc[review_index]
+            required = ("Source document", "Source version", "Source location", "Application scope", "Evidence reviewer")
+            if row["Status"] == "Defined" and all(str(row.get(field, "")).strip() and not pd.isna(row.get(field)) for field in required):
+                edited.at[review_index, "Evidence status"] = "Reviewer confirmed"
+                edited.at[review_index, "Evidence fingerprint"] = q14_evidence_fingerprint(row)
+            else:
+                st.warning("Define the item and record source/version/location/scope/reviewer first." if lang == "en" else "먼저 항목을 정의하고 문서·버전·위치·적용 범위·검토자를 기록하세요.")
         edited["Gate"] = edited.apply(evaluate_q14_problem, axis=1)
         tables[selected_key] = edited.drop(columns=["Gate"], errors="ignore")
         st.session_state.q14_development_tables = tables
@@ -765,9 +804,9 @@ def apply_validation_extension(app: Any) -> None:
             )
         else:
             st.success(
-                "Q14 analytical procedure development check is passing for the selected test item."
+                "No unresolved Q14 input/source-review gate is shown. Experimental support and QC approval require separate review."
                 if lang == "en"
-                else "선택한 시험항목의 Q14 분석법 개발 검토가 통과 상태입니다."
+                else "Q14 입력·근거 검토 gate에 미해결 항목이 없습니다. 실험 근거와 QC 승인은 별도 검토해야 합니다."
             )
         return edited
 
@@ -1302,7 +1341,7 @@ def apply_validation_extension(app: Any) -> None:
         q14_reviews = q14_report_frame(include_gate=True)
         q14_md = app.markdown_table(
             q14_reviews,
-            ["Test item", "Q14 check", "Status", "Risk", "Gate", "Problem signal", "Evidence to request", "CTD update"],
+            ["Test item", "Q14 check", "Status", "Risk", "Gate", "Evidence status", "Source document", "Source version", "Source location", "Application scope", "Evidence reviewer", "Problem signal", "Evidence to request", "CTD update"],
         )
         reviews = review_frame(include_gate=True)
         review_md = app.markdown_table(reviews[reviews["Gate"] == "Review"], ["Test item", "Item", "Result", "Unit", "Rule", "Lower", "Upper", "Note", "CTD update"])
